@@ -7,10 +7,17 @@ authors = [
     { name = "Athroniaeth", email = "pierre.chaumont@hotmail.fr" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+    "loguru>=0.7.3",
+    "orjson>=3.10.18",
+    "python-dotenv>=1.1.0",
+    "typer>=0.15.4",
+]
 
 [project.scripts]
-clean-fastapi-template = "clean_fastapi_template:main"
+cli = "template:cli"
+lint = "template:lint"
 
 [build-system]
 requires = ["hatchling"]
