@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from template.constants import Request
+from template.core.state import Request
 
 index_router = APIRouter(tags=["Utils"])
 api_router = APIRouter(tags=["API"], prefix="/api/v1")

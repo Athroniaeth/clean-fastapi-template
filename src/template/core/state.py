@@ -1,10 +1,13 @@
-from dataclasses import dataclass, field, fields
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, fields
 from enum import StrEnum
-from typing import Mapping  # type: ignore[import]
+from typing import Mapping, AsyncGenerator, Any  # type: ignore[import]
 
+from dotenv import load_dotenv
 from fastapi import FastAPI as _FastAPI
 from fastapi import Request as _Request
 from httpx import AsyncClient
+from loguru import logger
 
 
 class Level(StrEnum):
@@ -74,3 +77,24 @@ class Request(_Request):
     """Custom request class to include the HTTP client in the state."""
 
     state: State
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[State, Any]:
+    """Basic lifespan context manager for FastAPI."""
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Note: We log with TRACE for not spam with pytest
+    logger.debug("Starting FastAPI application lifecycle")
+
+    async with AsyncClient() as client:
+        state: State = State(
+            client=client,
+            title=app.title,
+            version=app.version,
+            description=app.description,
+        )
+        yield state
+
+    logger.debug("Shutting down FastAPI application lifecycle")

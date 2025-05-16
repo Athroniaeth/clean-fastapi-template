@@ -6,7 +6,7 @@ import typer
 from loguru import logger
 from typer import Typer
 
-from template.constants import Level
+from template.core.state import Level
 
 LoggingLevel = Annotated[
     Level, typer.Option("--logging-level", "-l", help="Log level of the application.")
