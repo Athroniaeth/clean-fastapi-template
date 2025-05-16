@@ -1,0 +1,32 @@
+services:
+  api:
+    # Force admin to create a .env file
+    env_file: .env
+    container_name: api
+    command: gunicorn -k uvicorn.workers.UvicornWorker template.app:create_app --bind ${HOST}:${PORT} -w ${WORKERS:-1}
+    build:
+      context: .
+    volumes:
+      - ./.env:/app/.env
+      - ./data:/app/data
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public-web
+      - traefik.constraint-label=traefik-public
+      # Uses the environment variable DOMAIN
+      - traefik.http.routers.${TRAEFIK_LABEL}-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.${TRAEFIK_LABEL}-public-http.entrypoints=http
+      - traefik.http.routers.${TRAEFIK_LABEL}-public-http.middlewares=https-redirect
+      # traefik-https the actual router using HTTPS
+      # Uses the environment variable DOMAIN
+      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.entrypoints=https
+      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.tls=true
+      - traefik.http.services.${TRAEFIK_LABEL}-public-https.loadbalancer.server.port=${PORT}
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external:
+      name: traefik_public

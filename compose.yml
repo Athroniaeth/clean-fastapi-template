@@ -1,0 +1,23 @@
+services:
+  api:
+    volumes:
+      - ./.env:/app/.env
+      - ./data:/app/data
+    container_name: api
+    command: gunicorn -k uvicorn.workers.UvicornWorker template.app:create_app --bind ${HOST}:${PORT} -w ${WORKERS:-1}
+    build:
+      context: .
+    ports:
+      - "${PORT}:${PORT}"
+    develop:
+      watch:
+        - action: sync
+          target: /app
+          path: .
+          ignore:
+            - .venv/
+            - __pycache__/
+            - "*.pyc"
+            - "*.pyo"
+        - action: rebuild
+          path: ./uv.lock
