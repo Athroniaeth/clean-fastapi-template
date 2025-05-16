@@ -558,7 +558,6 @@ name = "template"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "asgi-lifespan" },
     { name = "fastapi", extra = ["standard"] },
     { name = "loguru" },
     { name = "orjson" },
@@ -568,6 +567,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "asgi-lifespan" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -576,7 +576,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "asgi-lifespan", specifier = ">=2.1.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "orjson", specifier = ">=3.10.18" },
@@ -586,6 +585,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "asgi-lifespan", specifier = ">=2.1.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
     { name = "pytest-cov", specifier = ">=6.1.1" },
