@@ -1,3 +1,4 @@
+import tomllib
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, fields
 from enum import StrEnum
@@ -8,6 +9,8 @@ from fastapi import FastAPI as _FastAPI
 from fastapi import Request as _Request
 from httpx import AsyncClient
 from loguru import logger
+
+from template import PROJECT_PATH
 
 
 class Level(StrEnum):
@@ -98,3 +101,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[State, Any]:
         yield state
 
     logger.debug("Shutting down FastAPI application lifecycle")
+
+
+def get_version() -> str:
+    """Get the version of the application."""
+    # Get the version of the pyproject.toml file
+    pyproject_path = PROJECT_PATH / "pyproject.toml"
+    content = pyproject_path.read_text(encoding="utf-8")
+    dict_content = tomllib.loads(content)
+    return dict_content["project"]["version"]

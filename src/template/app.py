@@ -5,8 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 
-from template import get_version
-from template.core.state import FastAPI, lifespan
+from template.core.state import FastAPI, lifespan, get_version
 from template.core.exceptions import APIException
 from template.routers.index import index_router, api_router
 

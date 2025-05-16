@@ -1,4 +1,3 @@
-import tomllib
 from pathlib import Path
 from typing import Tuple
 
@@ -11,15 +10,6 @@ def lint():
 
     subprocess.run("uv run ruff format .", shell=True)
     subprocess.run("uv run ruff check --fix .", shell=True)
-
-
-def get_version() -> str:
-    """Get the version of the application."""
-    # Get the version of the pyproject.toml file
-    pyproject_path = PROJECT_PATH / "pyproject.toml"
-    content = pyproject_path.read_text(encoding="utf-8")
-    dict_content = tomllib.loads(content)
-    return dict_content["project"]["version"]
 
 
 def cli():
