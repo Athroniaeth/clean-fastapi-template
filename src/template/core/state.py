@@ -4,13 +4,13 @@ from dataclasses import dataclass, fields
 from enum import StrEnum
 from typing import Mapping, AsyncGenerator, Any  # type: ignore[import]
 
-from dotenv import load_dotenv
 from fastapi import FastAPI as _FastAPI
 from fastapi import Request as _Request
 from httpx import AsyncClient
 from loguru import logger
 
 from template import PROJECT_PATH
+from template.database import create_database
 
 
 class Level(StrEnum):
@@ -85,8 +85,9 @@ class Request(_Request):
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[State, Any]:
     """Basic lifespan context manager for FastAPI."""
-    # Load environment variables from .env file
-    load_dotenv()
+
+    # Create database connection
+    await create_database()
 
     # Note: We log with TRACE for not spam with pytest
     logger.debug("Starting FastAPI application lifecycle")
