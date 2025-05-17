@@ -2,7 +2,7 @@ from typing import AsyncIterator
 
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base, DeclarativeBase
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 """url = URL.create(
     drivername="postgresql",

@@ -14,6 +14,7 @@ dependencies = [
     "orjson>=3.10.18",
     "loguru>=0.7.3",
     "typer>=0.15.4",
+    "pydantic-settings>=2.9.1",
 ]
 
 [project.scripts]
@@ -48,3 +49,6 @@ asyncio_mode = "auto"
 # - Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future.
 # - Valid fixture loop scopes are: "function", "class", "module", "package", "session"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.coverage.run]
+omit = ["src/template/__init__.py"]
