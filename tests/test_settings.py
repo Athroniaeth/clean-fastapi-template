@@ -8,7 +8,6 @@ SQLAlchemySettings subclass based on the ENVIRONMENT configuration.
 Example:
     pytest test_settings.py
 """
-import os
 
 import pytest
 from pydantic import ValidationError
@@ -25,6 +24,7 @@ class TestSettings(Settings):
     """
     Settings class for testing (disables loading from .env).
     """
+
     class Config:
         env_file = None
 
@@ -49,7 +49,7 @@ def test_db_settings_development(monkeypatch):
     """Verify DevelopmentSQLAlchemySettings is returned for development environment."""
     # Set environment to DEVELOPMENT
     monkeypatch.setenv("ENVIRONMENT", Environment.DEVELOPMENT.value)
-    
+
     # Remove any custom DATABASE_URL override
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
@@ -65,7 +65,7 @@ def test_db_settings_production(monkeypatch):
     """Verify ProductionSQLAlchemySettings is returned for production environment."""
     # Set environment to PRODUCTION
     monkeypatch.setenv("ENVIRONMENT", Environment.PRODUCTION.value)
-    
+
     # Remove any custom DATABASE_URL override
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
@@ -81,7 +81,6 @@ def test_invalid_environment_raises(monkeypatch):
     """Verify that an unsupported environment setting raises a KeyError."""
     # Set an invalid environment value
     monkeypatch.setenv("ENVIRONMENT", "unsupported_env")
-    
+
     with pytest.raises(ValidationError):
         _ = TestSettings()
-        

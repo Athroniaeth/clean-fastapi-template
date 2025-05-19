@@ -7,7 +7,7 @@ from fastapi.responses import ORJSONResponse
 
 from template.core.state import FastAPI, lifespan, get_version
 from template.core.exceptions import APIException
-from template.routers.index import index_router, api_router
+from template.routes.index import index_router, api_router
 
 
 def create_app(

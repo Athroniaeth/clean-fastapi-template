@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import Field, computed_field, PrivateAttr
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
 class SQLAlchemySettings(BaseSettings):
     sqlalchemy_url: URL = Field(..., alias="DATABASE_URL")
-    
+
     @computed_field
     @property
     def url(self) -> str:
