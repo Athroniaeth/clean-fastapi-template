@@ -131,15 +131,16 @@ class APIKeyRepository:
         result = await self._session.execute(stmt)
         await self._session.commit()
         await self._session.flush()
+    
+        return result.rowcount > 0  # type: ignore
 
-        return result.rowcount() > 0
-
-    async def delete(self, api_key: ApiKeyModel) -> None:
+    async def delete(self, api_key: ApiKeyModel) -> bool:
         """
         Permanently remove an ApiKeyModel from the database.
 
         Args:
             api_key (ApiKeyModel): the instance to remove.
         """
-        await self._session.delete(api_key)
+        result = await self._session.delete(api_key)
         await self._session.flush()
+        return result.rowcount > 0  # type: ignore

@@ -5,7 +5,7 @@ from starlette import status
 from template.core.exceptions import APIException
 from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
-from template.schemas.api_keys import APIKeyReadSchema, APIKeyCreateSchema, APIKeyCreateResponseSchema, APIKeyUpdateSchema
+from template.schemas.api_keys import APIKeyReadResponseSchema, APIKeyCreateSchema, APIKeyCreateResponseSchema, APIKeyUpdateSchema
 
 
 class APIKeyException(APIException):
@@ -62,7 +62,7 @@ class APIKeyService:
             key_id (int): identifier of the key.
 
         Returns:
-            APIKeyReadSchema: the retrieved key.
+            APIKeyReadResponseSchema: the retrieved key.
 
         Raises:
             APIKeyNotFoundException: if no such key exists.
@@ -74,7 +74,7 @@ class APIKeyService:
 
         return key
 
-    async def get(self, key_id: int) -> APIKeyReadSchema:
+    async def get(self, key_id: int) -> APIKeyReadResponseSchema:
         """
         Retrieve an API key by its ID.
 
@@ -82,15 +82,15 @@ class APIKeyService:
             key_id (int): identifier of the key.
 
         Returns:
-            APIKeyReadSchema: the retrieved key.
+            APIKeyReadResponseSchema: the retrieved key.
 
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        return APIKeyReadSchema.model_validate(key)
+        return APIKeyReadResponseSchema.model_validate(key)
 
-    async def list_keys(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[APIKeyReadSchema]:
+    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[APIKeyReadResponseSchema]:
         """
         List API keys with optional pagination and active‐only filtering.
 
@@ -107,7 +107,7 @@ class APIKeyService:
             limit=limit,
             active_only=active_only,
         )
-        return [APIKeyReadSchema.model_validate(k) for k in keys]
+        return [APIKeyReadResponseSchema.model_validate(k) for k in keys]
 
     async def create(self, data: APIKeyCreateSchema) -> APIKeyCreateResponseSchema:
         """
@@ -133,24 +133,25 @@ class APIKeyService:
         resp.plain_key = raw_key
         return resp
 
-    async def update(self, key_id: int, data: APIKeyUpdateSchema) -> APIKeyReadSchema:
+    async def update(self, id_: int, data: APIKeyUpdateSchema) -> APIKeyReadResponseSchema:
         """
         Update fields of an existing API key.
 
         Args:
-            key_id (int): identifier of the key to update.
+            id_ (int): identifier of the key.
             data (APIKeyUpdateSchema): fields to modify.
 
         Returns:
-            APIKeyReadSchema: updated key.
+            APIKeyReadResponseSchema: updated key.
 
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
-        key = await self._get_key(key_id)
-        await self._repo.update(key, data.model_dump(exclude_unset=True))
+        key = await self._get_key(id_)
+        await self._repo.update(key, data.model_dump())
+        return APIKeyReadResponseSchema.model_validate(key)
 
-    async def activate(self, key_id: int, active: bool) -> APIKeyReadSchema:
+    async def activate(self, key_id: int, active: bool) -> APIKeyReadResponseSchema:
         """
         Activate or deactivate an API key.
 
@@ -159,14 +160,14 @@ class APIKeyService:
             active (bool): True to activate, False to deactivate.
 
         Returns:
-            APIKeyReadSchema: the updated key.
+            APIKeyReadResponseSchema: the updated key.
 
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
         await self._repo.update(key, {"is_active": active})
-        return APIKeyReadSchema.model_validate(key)
+        return APIKeyReadResponseSchema.model_validate(key)
 
     async def verify_key(self, raw_key: str) -> bool:
         """
@@ -193,7 +194,7 @@ class APIKeyService:
 
         raise APIKeyInvalidException(raw_key)
 
-    async def delete(self, key_id: int) -> None:
+    async def delete(self, key_id: int) -> bool:
         """
         Permanently delete an API key by its ID.
 
@@ -204,4 +205,4 @@ class APIKeyService:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        await self._repo.delete(key)
+        return await self._repo.delete(key)

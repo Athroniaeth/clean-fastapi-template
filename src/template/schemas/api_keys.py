@@ -8,10 +8,10 @@ class APIKeySelectSchema(BaseModel):
     """Schema for selecting an API key by its identifier.
 
     Attributes:
-        id_ (int): The identifier of the API key (alias “id”).
+        id (int): The identifier of the API key (alias “id”).
     """
 
-    id_: int = Field(alias="id")
+    id: int = Field(...)
 
 
 class APIKeyBaseSchema(BaseModel):
@@ -41,11 +41,10 @@ class APIKeyCreateSchema(APIKeyBaseSchema):
     ...
 
 
-class APIKeyUpdateSchema(APIKeySelectSchema, APIKeyBaseSchema):
+class APIKeyUpdateSchema(APIKeyBaseSchema):
     """Schema for full replacement (PUT) of an existing API key.
 
     Attributes:
-        id_ (int): The identifier of the API key to update.
         name (str): New human-readable name.
         description (Optional[str]): New description.
         is_active (bool): New activation status.
@@ -54,11 +53,11 @@ class APIKeyUpdateSchema(APIKeySelectSchema, APIKeyBaseSchema):
     ...
 
 
-class APIKeyReadSchema(APIKeySelectSchema, APIKeyBaseSchema):
+class APIKeyReadResponse(APIKeySelectSchema, APIKeyBaseSchema):
     """Schema returned for API key data in responses.
 
     Attributes:
-        id_ (int): The identifier of the API key.
+        id (int): The identifier of the API key.
         name (str): Name of the API key.
         description (Optional[str]): Description of the API key.
         is_active (bool): Activation status.
@@ -68,7 +67,7 @@ class APIKeyReadSchema(APIKeySelectSchema, APIKeyBaseSchema):
     created_at: datetime
 
 
-class APIKeyCreateResponseSchema(APIKeyReadSchema):
+class APIKeyCreateResponse(APIKeyReadResponse):
     """Response schema for API key creation.
 
     Extends:
@@ -79,3 +78,33 @@ class APIKeyCreateResponseSchema(APIKeyReadSchema):
     """
 
     plain_key: Optional[str] = Field(default=None, exclude=True)
+    
+
+class APIKeyReadResponseSchema(APIKeyReadResponse):
+    model_config = {
+        "json_schema_extra": {
+            "examples": [APIKeyReadResponse(
+                id=1,
+                name="Example API Key",
+                description="This is an example API key.",
+                is_active=True,
+                created_at=datetime.now(),
+            ).model_dump()]
+        }
+    }
+
+
+class APIKeyCreateResponseSchema(APIKeyCreateResponse):
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [APIKeyCreateResponse(
+                id=1,
+                name="Example API Key",
+                description="This is an example API key.",
+                is_active=True,
+                created_at=datetime.now(),
+                plain_key="example-raw-key",
+            ).model_dump()]
+        }
+    }
