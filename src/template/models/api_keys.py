@@ -1,8 +1,7 @@
 import secrets
 
-import bcrypt
 from passlib.hash import bcrypt
-from sqlalchemy import Column, String, Text, Boolean, DateTime, func, Integer
+from sqlalchemy import Column, String, Boolean, DateTime, func, Integer
 
 from template.database import Base
 
@@ -33,11 +32,11 @@ class ApiKeyModel(Base):
         autoincrement=True,
     )
     name = Column(
-        String(100),
+        String(64),
         nullable=False,
     )
     description = Column(
-        Text,
+        String(255),
         nullable=True,
     )
     is_active = Column(
@@ -58,10 +57,16 @@ class ApiKeyModel(Base):
         unique=True,
     )
 
-    def __init__(self, name: str, description: str = None):
+    def __init__(
+        self,
+        name: str,
+        description: str = None,
+        is_active: bool = True,
+    ):
         super().__init__()
         self.name = name
         self.description = description
+        self.is_active = is_active
 
         # Generate a random API key and hash it
         raw_key = generate_raw_key()
@@ -84,7 +89,7 @@ class ApiKeyModel(Base):
          - avoid storing it elsewhere in the database.
         """
         # self._plain_key can be no instantiated
-        plain_key = getattr(self, "_plain_key", None)
+        plain_key = self._plain_key
 
         if plain_key is None:
             raise ValueError("The plain key is not available anymore.")
