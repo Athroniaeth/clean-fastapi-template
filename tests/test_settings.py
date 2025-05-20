@@ -10,20 +10,28 @@ Example:
 """
 
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
+from sqlalchemy import URL
 
 from template.settings import (
     Settings,
     Environment,
-    DevelopmentSQLAlchemySettings,
-    ProductionSQLAlchemySettings,
+    DevelopmentSettings,
+    ProductionSettings,
+    get_settings,
 )
 
 
 class TestSettings(Settings):
-    """
-    Settings class for testing (disables loading from .env).
-    """
+    """Settings class for testing (disables loading from .env)."""
+
+    postgres_url: URL = Field(
+        default=URL.create(
+            drivername="sqlite+aiosqlite",
+            database=":memory:",
+        ),
+        alias="DATABASE_URL",
+    )
 
     class Config:
         env_file = None
@@ -46,35 +54,35 @@ def test_default_application_settings(monkeypatch):
 
 
 def test_db_settings_development(monkeypatch):
-    """Verify DevelopmentSQLAlchemySettings is returned for development environment."""
+    """Verify DevelopmentSettings is returned for development environment."""
     # Set environment to DEVELOPMENT
     monkeypatch.setenv("ENVIRONMENT", Environment.DEVELOPMENT.value)
 
     # Remove any custom DATABASE_URL override
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
-    settings = TestSettings()
-    db_settings = settings.db
+    # Get settings after loading environment variables
+    settings = get_settings()
 
-    assert isinstance(db_settings, DevelopmentSQLAlchemySettings)
+    assert isinstance(settings, DevelopmentSettings)
     expected = "sqlite+aiosqlite:///./data/dev.db"
-    assert db_settings.url == expected
+    assert settings.database_url == expected
 
 
 def test_db_settings_production(monkeypatch):
-    """Verify ProductionSQLAlchemySettings is returned for production environment."""
+    """Verify ProductionSettings is returned for production environment."""
     # Set environment to PRODUCTION
     monkeypatch.setenv("ENVIRONMENT", Environment.PRODUCTION.value)
 
     # Remove any custom DATABASE_URL override
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
-    settings = TestSettings()
-    db_settings = settings.db
+    # Get settings after loading environment variables
+    settings = get_settings()
 
-    assert isinstance(db_settings, ProductionSQLAlchemySettings)
+    assert isinstance(settings, ProductionSettings)
     expected = "postgresql+asyncpg://username:password@postgres:5432/database"
-    assert db_settings.url == expected
+    assert settings.database_url == expected
 
 
 def test_invalid_environment_raises(monkeypatch):
