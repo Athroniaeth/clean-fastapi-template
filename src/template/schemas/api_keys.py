@@ -78,33 +78,36 @@ class APIKeyCreateResponse(APIKeyReadResponse):
     """
 
     plain_key: Optional[str] = Field(default=None, exclude=True)
-    
+
 
 class APIKeyReadResponseSchema(APIKeyReadResponse):
     model_config = {
         "json_schema_extra": {
-            "examples": [APIKeyReadResponse(
-                id=1,
-                name="Example API Key",
-                description="This is an example API key.",
-                is_active=True,
-                created_at=datetime.now(),
-            ).model_dump()]
+            "examples": [
+                APIKeyReadResponse(
+                    id=1,
+                    name="Example API Key",
+                    description="This is an example API key.",
+                    is_active=True,
+                    created_at=datetime.now(),
+                ).model_dump()
+            ]
         }
     }
 
 
 class APIKeyCreateResponseSchema(APIKeyCreateResponse):
-
     model_config = {
         "json_schema_extra": {
-            "examples": [APIKeyCreateResponse(
-                id=1,
-                name="Example API Key",
-                description="This is an example API key.",
-                is_active=True,
-                created_at=datetime.now(),
-                plain_key="example-raw-key",
-            ).model_dump()]
+            "examples": [
+                APIKeyCreateResponse(
+                    id=1,
+                    name="Example API Key",
+                    description="This is an example API key.",
+                    is_active=True,
+                    created_at=datetime.now(),
+                    plain_key="example-raw-key",
+                ).model_dump()
+            ]
         }
     }

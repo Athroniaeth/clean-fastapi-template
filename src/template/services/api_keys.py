@@ -5,7 +5,12 @@ from starlette import status
 from template.core.exceptions import APIException
 from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
-from template.schemas.api_keys import APIKeyReadResponseSchema, APIKeyCreateSchema, APIKeyCreateResponseSchema, APIKeyUpdateSchema
+from template.schemas.api_keys import (
+    APIKeyReadResponseSchema,
+    APIKeyCreateSchema,
+    APIKeyCreateResponseSchema,
+    APIKeyUpdateSchema,
+)
 
 
 class APIKeyException(APIException):
@@ -194,7 +199,7 @@ class APIKeyService:
 
         raise APIKeyInvalidException(raw_key)
 
-    async def delete(self, key_id: int) -> bool:
+    async def delete(self, key_id: int) -> None:
         """
         Permanently delete an API key by its ID.
 
@@ -205,4 +210,4 @@ class APIKeyService:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        return await self._repo.delete(key)
+        await self._repo.delete(key)

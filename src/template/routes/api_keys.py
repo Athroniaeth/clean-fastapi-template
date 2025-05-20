@@ -12,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.database import get_db
 from template.repositories.api_keys import APIKeyRepository
-from template.schemas.api_keys import APIKeyCreateResponseSchema, APIKeyCreateSchema, APIKeyReadResponseSchema, APIKeyUpdateSchema
+from template.schemas.api_keys import (
+    APIKeyCreateResponseSchema,
+    APIKeyCreateSchema,
+    APIKeyReadResponseSchema,
+    APIKeyUpdateSchema,
+)
 from template.services.api_keys import APIKeyService
 
 
@@ -63,7 +68,7 @@ async def list_api_keys(
 
 
 @keys_router.delete(
-    "/{id_}", 
+    "/{id_}",
     status_code=status.HTTP_204_NO_CONTENT,
     # Add examples output
     responses={
@@ -83,8 +88,8 @@ async def delete_api_key(
     id_: int,
     service: Annotated[APIKeyService, Depends(_get_service)],
 ):
-    result = await service.delete(id_)
-    return {"success": result}
+    await service.delete(id_)
+    return {"success": True}
 
 
 @keys_router.patch("/{id_}", status_code=status.HTTP_200_OK)
