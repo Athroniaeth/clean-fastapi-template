@@ -7,6 +7,34 @@ from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
 
+class SettingsError(Exception):
+    """Custom exception for settings errors."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class InvalidEnvironmentError(SettingsError):
+    """Custom exception for invalid environment errors."""
+
+    def __init__(self, environment: str):
+        available_envs = [env.value for env in Environment]
+        available_envs = ", ".join(available_envs)
+        message = f"Invalid environment: '{environment}', expected one of {available_envs}"
+
+        super().__init__(message)
+        self.environment = environment
+
+
+class MissingEnvironmentError(SettingsError):
+    """Custom exception for missing environment errors."""
+
+    def __init__(self, variable: str):
+        super().__init__(f"Missing environment variable: '{variable}'")
+        self.variable = variable
+
+
 class Environment(str, Enum):
     """
     Environment to use.
@@ -74,11 +102,13 @@ def get_settings() -> Settings:
 
     # Get the environment from the environment variable
     environment = os.getenv("ENVIRONMENT")
-    environment = Environment(environment)
+    if environment is None:
+        raise MissingEnvironmentError("ENVIRONMENT")
+
     settings_class = mapping.get(environment)
 
     if settings_class is None:
-        raise ValueError(f"Invalid environment: {Settings.environment}")
+        raise InvalidEnvironmentError(environment)
 
     # Return the settings class instance
     return settings_class()

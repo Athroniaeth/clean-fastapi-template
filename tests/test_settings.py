@@ -10,7 +10,7 @@ Example:
 """
 
 import pytest
-from pydantic import ValidationError, Field
+from pydantic import Field
 from sqlalchemy import URL
 
 from template.settings import (
@@ -19,6 +19,8 @@ from template.settings import (
     DevelopmentSettings,
     ProductionSettings,
     get_settings,
+    InvalidEnvironmentError,
+    MissingEnvironmentError,
 )
 
 
@@ -85,10 +87,19 @@ def test_db_settings_production(monkeypatch):
     assert settings.database_url == expected
 
 
+def test_missing_environment_raises(monkeypatch):
+    """Verify that missing ENVIRONMENT variable raises a ValueError."""
+    # Remove ENVIRONMENT variable
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+
+    with pytest.raises(MissingEnvironmentError):
+        _ = get_settings()
+
+
 def test_invalid_environment_raises(monkeypatch):
     """Verify that an unsupported environment setting raises a KeyError."""
     # Set an invalid environment value
     monkeypatch.setenv("ENVIRONMENT", "unsupported_env")
 
-    with pytest.raises(ValidationError):
-        _ = TestSettings()
+    with pytest.raises(InvalidEnvironmentError):
+        _ = get_settings()
