@@ -1,8 +1,10 @@
-from typing import Sequence
+from typing import Sequence, Optional
 
+from fastapi.security import APIKeyHeader
 from starlette import status
 
 from template.core.exceptions import APIException
+from template.database import get_db
 from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
 from template.schemas.api_keys import (
@@ -11,6 +13,9 @@ from template.schemas.api_keys import (
     APIKeyCreateResponseSchema,
     APIKeyUpdateSchema,
 )
+
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 class APIKeyException(APIException):
@@ -32,6 +37,19 @@ class APIKeyNotFoundException(APIKeyException):
         super().__init__(
             status_code=self.status_code,
             detail=self.detail.format(key_id=key_id),
+        )
+
+
+class APIKeyNotProvidedException(APIKeyException):
+    """Raised when an API key is not provided in the request."""
+
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "API key not provided in the request."
+
+    def __init__(self):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail,
         )
 
 
@@ -174,7 +192,7 @@ class APIKeyService:
         await self._repo.update(key, {"is_active": active})
         return APIKeyReadResponseSchema.model_validate(key)
 
-    async def verify_key(self, raw_key: str) -> bool:
+    async def verify_key(self, raw_key: Optional[str]) -> bool:
         """
         Verify that a raw API key is valid against stored hashes.
 
@@ -189,6 +207,9 @@ class APIKeyService:
         Raises:
             APIKeyInvalidException: if no match is found.
         """
+        if not raw_key:
+            raise APIKeyNotProvidedException()
+
         keys = await self._repo.list_all(active_only=True)
 
         # Todo : Create a custom repo query for this (return boolean)
@@ -211,3 +232,21 @@ class APIKeyService:
         """
         key = await self._get_key(key_id)
         await self._repo.delete(key)
+
+
+async def main():
+    """Function to create API key when i forget the last one."""
+    async for session in get_db():
+        repo = APIKeyRepository(session)
+        service = APIKeyService(repo)
+
+        # Example of creating a new API key
+        new_key_data = APIKeyCreateSchema(name="My API Key", description="Test key")
+        created_key = await service.create(new_key_data)
+        print(created_key)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(main())

@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from template.core.state import Request
 from template.routes.api_keys import keys_router
+from template.depends import verify_api_key
 
 index_router = APIRouter(tags=["Utils"])
 api_router = APIRouter(tags=["API"], prefix="/api/v1")
@@ -23,4 +24,10 @@ async def root(request: Request):
 @index_router.get("/health")
 async def health():
     """Health endpoint of the application."""
+    return {"status": "ok"}
+
+
+@index_router.get("/protected", dependencies=[Depends(verify_api_key)])
+async def protected():
+    """Protected endpoint of the application."""
     return {"status": "ok"}
