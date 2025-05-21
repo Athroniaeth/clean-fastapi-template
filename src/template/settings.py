@@ -2,7 +2,7 @@ import os
 from abc import ABC
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
@@ -52,6 +52,8 @@ class Settings(ABC, BaseSettings):
     Base settings for the application.
     """
 
+    model_config = ConfigDict(extra="ignore", env_file_encoding="utf-8")
+
     host: str = Field(default="localhost", alias="HOST")
     port: int = Field(default=8000, alias="PORT")
     workers: int = Field(default=1, alias="WORKERS")
@@ -63,10 +65,6 @@ class Settings(ABC, BaseSettings):
     def database_url(self) -> str:
         """Get the database URL without hiding the password."""
         return self.postgres_url.render_as_string(hide_password=False)
-
-    class Config:
-        env_file_encoding = "utf-8"
-        extra = "ignore"
 
 
 class DevelopmentSettings(Settings):

@@ -25,7 +25,7 @@ from template.schemas.api_keys import (
 )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def key_data() -> APIKeyCreateSchema:
     """Static input data reused across several tests."""
     return APIKeyCreateSchema(
@@ -35,7 +35,7 @@ def key_data() -> APIKeyCreateSchema:
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def repository(session: AsyncSession) -> APIKeyRepository:
     """Instantiate a repository bound to the provided DB session.
 
@@ -48,7 +48,7 @@ async def repository(session: AsyncSession) -> APIKeyRepository:
     return APIKeyRepository(session)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def service(repository: APIKeyRepository) -> APIKeyService:
     """Return a ready-to-use service instance.
 
@@ -61,7 +61,7 @@ async def service(repository: APIKeyRepository) -> APIKeyService:
     return APIKeyService(repository)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def created_key(service: APIKeyService, key_data: APIKeyCreateSchema):
     """Create a key through the service and return the creation response."""
     return await service.create(key_data)

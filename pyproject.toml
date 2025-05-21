@@ -30,19 +30,23 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "ruff>=0.11.10",
+    "vulture>=2.14",
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
+    "pytest-xdist>=3.6.1",
     "pytest-asyncio>=0.26.0",
+
     "asgi-lifespan>=2.1.0",
     # SQLAlchemy dev mode
     "sqlalchemy[asyncio]>=2.0.41",
     "aiosqlite>=0.21.0",
-    "vulture>=2.14",
 ]
 
 [tool.pytest.ini_options]
 # Automatically create html and xml coverage reports
-addopts = "--cov=src --cov-report=term-missing --cov-report=html --cov-report=xml"
+addopts = "-n 4 --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml"
+
+# Automatically apply pytest-asyncio to all async tests
 asyncio_mode = "auto"
 
 # PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
@@ -50,7 +54,12 @@ asyncio_mode = "auto"
 # - Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope.
 # - Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future.
 # - Valid fixture loop scopes are: "function", "class", "module", "package", "session"
-asyncio_default_fixture_loop_scope = "function"
+
+# You must set as "session" to avoid the warning "DeprecationWarning"
+# "pytest-asyncio detected an unclosed event loop when tearing down the event_loop"
+# because, in "function" scope for example, this parameter change also the default scope of the event_loop fixture to "function"
+# and you are forced to use the rewritten event_loop fixture in your conftest.py, this create this warning
+asyncio_default_fixture_loop_scope = "session"
 
 [tool.coverage.run]
 omit = ["src/template/__init__.py"]

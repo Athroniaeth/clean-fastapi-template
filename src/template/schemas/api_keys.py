@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class APIKeySelectSchema(BaseModel):
@@ -23,12 +23,11 @@ class APIKeyBaseSchema(BaseModel):
         is_active (bool): Whether the API key is active.
     """
 
+    model_config = ConfigDict(from_attributes=True)
+
     name: str = Field(..., max_length=64)
     description: Optional[str] = Field(None, max_length=255)
     is_active: bool = Field(True)
-
-    class Config:
-        from_attributes = True
 
 
 class APIKeyCreateSchema(APIKeyBaseSchema):

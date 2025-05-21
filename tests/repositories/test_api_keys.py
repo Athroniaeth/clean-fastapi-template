@@ -5,7 +5,7 @@ from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def repository(session: AsyncSession) -> APIKeyRepository:
     """Return a ready-to-use repository instance.
 
@@ -18,7 +18,7 @@ async def repository(session: AsyncSession) -> APIKeyRepository:
     return APIKeyRepository(session)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def new_key() -> ApiKeyModel:
     """Return a new API key instance for testing."""
 

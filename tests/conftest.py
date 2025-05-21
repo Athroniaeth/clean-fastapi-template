@@ -1,4 +1,3 @@
-import asyncio
 from typing import AsyncIterator
 
 import pytest
@@ -10,19 +9,7 @@ from template.database import Base
 from template.app import create_app
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """
-    asyncio_default_fixture_loop_scope pyproject.toml variable
-    define all fixtures with 'function' scope, we need to
-    override it to 'package' scope.
-    """
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     """
     Fixture to create an HTTP client for testing.
@@ -39,7 +26,7 @@ async def client() -> AsyncIterator[AsyncClient]:
             yield client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def engine():
     """Create a SQLite in-memory engine and initialize the schema."""
     eng = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
@@ -51,7 +38,7 @@ async def engine():
     await eng.dispose()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     """
     Create a nested transaction and rollback at the end to isolate tests.

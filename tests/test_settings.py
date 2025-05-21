@@ -10,7 +10,7 @@ Example:
 """
 
 import pytest
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from sqlalchemy import URL
 
 from template.settings import (
@@ -24,8 +24,13 @@ from template.settings import (
 )
 
 
-class TestSettings(Settings):
-    """Settings class for testing (disables loading from .env)."""
+class CustomSettings(Settings):
+    """
+    Settings class for testing (disables loading from .env).
+
+    Notes:
+        Name this class "TestSettings" triggered warning with pytest-xdist.
+    """
 
     postgres_url: URL = Field(
         default=URL.create(
@@ -35,8 +40,7 @@ class TestSettings(Settings):
         alias="DATABASE_URL",
     )
 
-    class Config:
-        env_file = None
+    model_config = ConfigDict(env_file=None)
 
 
 def test_default_application_settings(monkeypatch):
@@ -47,7 +51,7 @@ def test_default_application_settings(monkeypatch):
     monkeypatch.delenv("WORKERS", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
 
-    settings = TestSettings()
+    settings = CustomSettings()
 
     assert settings.host == "localhost"
     assert settings.port == 8000
