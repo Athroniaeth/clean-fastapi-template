@@ -18,7 +18,7 @@ async def repository(session: AsyncSession) -> APIKeyRepository:
     return APIKeyRepository(session)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def new_key() -> ApiKeyModel:
     """Return a new API key instance for testing."""
 
@@ -64,6 +64,7 @@ async def test_list_all_after_creation(repository: APIKeyRepository, new_key: Ap
         new_key (ApiKeyModel): The new API key instance.
     """
     # list_all should now return a list containing our key
+    await repository.create(new_key)
     all_keys = await repository.list_all()
     assert len(all_keys) == 1, "Expected exactly one API key after creation"
     assert all_keys[0].id == new_key.id, "The listed key should match the created key"
@@ -77,6 +78,7 @@ async def test_update_api_key_status(repository: APIKeyRepository, new_key: ApiK
         new_key (ApiKeyModel): The new API key instance.
     """
     # Toggle is_active to False
+    await repository.create(new_key)
     await repository.update(new_key, {"is_active": False})
 
     # Fetch and ensure the status changed
@@ -92,6 +94,7 @@ async def test_delete_api_key(repository: APIKeyRepository, new_key: ApiKeyModel
         repository (APIKeyRepository): The API key repository fixture.
         new_key (ApiKeyModel): The new API key instance.
     """
+    await repository.create(new_key)
     await repository.delete(new_key)
 
     # Attempt to fetch the deleted key
