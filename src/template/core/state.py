@@ -57,10 +57,7 @@ class State(Mapping):
     client: AsyncClient
 
     def __getitem__(self, key):
-        try:
-            return getattr(self, key)
-        except AttributeError as e:
-            raise KeyError(key) from e
+        return getattr(self, key)
 
     def __iter__(self):
         for f in fields(self):

@@ -91,9 +91,6 @@ class ApiKeyModel(Base):
         # self._plain_key can be no instantiated
         plain_key = self._plain_key
 
-        if plain_key is None:
-            raise ValueError("The plain key is not available anymore.")
-
         # Remove the plain key after use to avoid storing it elsewhere
         del self._plain_key
         return plain_key
