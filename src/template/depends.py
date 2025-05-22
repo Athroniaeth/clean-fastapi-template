@@ -3,13 +3,13 @@ from typing import Annotated, Optional
 from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.database import get_db
+from template.database import inject_db
 from template.repositories.api_keys import APIKeyRepository
 from template.services.api_keys import api_key_header, APIKeyService
 
 
 async def verify_api_key(
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(inject_db)],
     api_key: Optional[str] = Security(api_key_header),
 ) -> None:
     """

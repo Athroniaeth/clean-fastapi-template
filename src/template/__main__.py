@@ -1,9 +1,15 @@
+import logging
+
 from loguru import logger
 
 
 def main():
     """Entry point for the application."""
-    from template.cli import cli
+    from template.commands.cli import cli
+
+    # Disable useless warnings
+    # https://github.com/pyca/bcrypt/issues/684#issuecomment-1858400267
+    logging.getLogger("passlib").setLevel(logging.ERROR)
 
     try:
         cli()

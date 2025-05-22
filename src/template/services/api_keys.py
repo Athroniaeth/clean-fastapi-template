@@ -4,7 +4,7 @@ from fastapi.security import APIKeyHeader
 from starlette import status
 
 from template.core.exceptions import APIException
-from template.database import get_db
+from template.database import inject_db
 from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
 from template.schemas.api_keys import (
@@ -236,7 +236,7 @@ class APIKeyService:
 
 async def main():
     """Function to create API key when i forget the last one."""
-    async for session in get_db():
+    async for session in inject_db():
         repo = APIKeyRepository(session)
         service = APIKeyService(repo)
 

@@ -6,6 +6,7 @@ import typer
 from loguru import logger
 from typer import Typer
 
+from template.commands.api_keys import cli_keys
 from template.core.state import Level
 
 LoggingLevel = Annotated[Level, typer.Option("--logging-level", "-l", help="Log level of the application.")]
@@ -16,6 +17,7 @@ cli = Typer(
     pretty_exceptions_enable=False,
     help="CLI for the FastAPI application.",
 )
+cli.add_typer(cli_keys)
 
 
 def _get_workers(expected_workers: int) -> Optional[int]:

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 from sqlalchemy.engine import URL
@@ -37,10 +38,23 @@ class Base(AsyncAttrs, DeclarativeBase):
     """Base to use for creating models."""
 
 
-async def get_db() -> AsyncIterator[AsyncSession]:
-    """Get a database session."""
+async def inject_db() -> AsyncIterator[AsyncSession]:
+    """Dependency to inject the database session."""
     async with async_session() as session:
         yield session
+
+
+@asynccontextmanager
+async def get_db() -> AsyncIterator[AsyncSession]:
+    """Get the database session."""
+    async with async_session() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 async def create_database() -> None:

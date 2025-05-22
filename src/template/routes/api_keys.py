@@ -10,7 +10,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.database import get_db
+from template.database import inject_db
 from template.repositories.api_keys import APIKeyRepository
 from template.schemas.api_keys import (
     APIKeyCreateResponseSchema,
@@ -21,7 +21,7 @@ from template.schemas.api_keys import (
 from template.services.api_keys import APIKeyService
 
 
-async def _get_service(session: Annotated[AsyncSession, Depends(get_db)]) -> APIKeyService:
+async def _get_service(session: Annotated[AsyncSession, Depends(inject_db)]) -> APIKeyService:
     """Return a ready-to-use service instance."""
     repository = APIKeyRepository(session)
     return APIKeyService(repository)
