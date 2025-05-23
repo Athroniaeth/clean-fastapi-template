@@ -232,21 +232,3 @@ class APIKeyService:
         """
         key = await self._get_key(key_id)
         await self._repo.delete(key)
-
-
-async def main():
-    """Function to create API key when i forget the last one."""
-    async for session in inject_db():
-        repo = APIKeyRepository(session)
-        service = APIKeyService(repo)
-
-        # Example of creating a new API key
-        new_key_data = APIKeyCreateSchema(name="My API Key", description="Test key")
-        created_key = await service.create(new_key_data)
-        print(created_key)
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())

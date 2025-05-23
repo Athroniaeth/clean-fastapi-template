@@ -3,12 +3,19 @@ from typing import AsyncIterator
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
+from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
 from template.database import Base
 from template.app import create_app
 
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_logger():
+    """Pending execution of tests, disable the loguru logger."""
+    logger.remove()
+    
+    
 @pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     """

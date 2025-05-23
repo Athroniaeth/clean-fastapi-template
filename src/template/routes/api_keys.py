@@ -89,7 +89,6 @@ async def delete_api_key(
     service: Annotated[APIKeyService, Depends(_get_service)],
 ):
     await service.delete(id_)
-    return {"success": True}
 
 
 @keys_router.patch("/{id_}", status_code=status.HTTP_200_OK)
