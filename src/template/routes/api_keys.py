@@ -55,10 +55,10 @@ async def create_api_key(
 
 @keys_router.get("/", status_code=status.HTTP_200_OK)
 async def list_api_keys(
+    service: Annotated[APIKeyService, Depends(_get_service)],
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     active_only: bool = Query(False),
-    service: Annotated[APIKeyService, Depends(_get_service)] = ...,
 ) -> Sequence[APIKeyReadResponseSchema]:
     return await service.list_all(
         skip=skip,
@@ -94,7 +94,7 @@ async def delete_api_key(
 @keys_router.patch("/{id_}", status_code=status.HTTP_200_OK)
 async def update_api_key(
     id_: int,
-    payload: Annotated[APIKeyUpdateSchema, Query(...)],
+    payload: Annotated[APIKeyUpdateSchema, Query()],
     service: Annotated[APIKeyService, Depends(_get_service)],
 ) -> APIKeyReadResponseSchema:
     return await service.update(id_, payload)

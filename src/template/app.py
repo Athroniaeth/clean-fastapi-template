@@ -1,4 +1,4 @@
-from contextlib import asynccontextmanager
+from typing import Callable
 
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +14,7 @@ def create_app(
     title: str = "FastAPI Application",
     version: str = get_version(),
     description: str = "Description of the FastAPI application",
-    lifespan: asynccontextmanager = lifespan,
+    lifespan: Callable = lifespan,
 ) -> FastAPI:
     """Create a new instance of the application."""
     app = FastAPI(

@@ -41,7 +41,7 @@ def _run(
     host: str,
     port: int,
     source: str,
-    workers: int = 1,
+    desired_workers: int = 1,
     reload: bool = False,
 ):
     """Run the server using uvicorn."""
@@ -51,7 +51,7 @@ def _run(
     logger.info(f"Running server on http://{str_host}:{port}")
 
     # Get the amount workers available
-    workers = _get_workers(workers)
+    workers = _get_workers(desired_workers)
 
     # Launch uvicorn in factory mode
     uvicorn.run(
@@ -93,5 +93,5 @@ def dev(
         port=port,
         reload=True,
         source=source,
-        workers=workers,
+        desired_workers=workers,
     )

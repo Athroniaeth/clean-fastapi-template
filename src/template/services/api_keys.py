@@ -4,7 +4,6 @@ from fastapi.security import APIKeyHeader
 from starlette import status
 
 from template.core.exceptions import APIException
-from template.database import inject_db
 from template.models.api_keys import ApiKeyModel
 from template.repositories.api_keys import APIKeyRepository
 from template.schemas.api_keys import (

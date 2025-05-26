@@ -14,8 +14,8 @@ from template.app import create_app
 def cleanup_logger():
     """Pending execution of tests, disable the loguru logger."""
     logger.remove()
-    
-    
+
+
 @pytest.fixture
 async def client() -> AsyncIterator[AsyncClient]:
     """

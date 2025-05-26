@@ -1,6 +1,7 @@
 import secrets
+from typing import Optional
 
-from passlib.hash import bcrypt
+from passlib.hash import bcrypt  # ty: ignore[unresolved-import]
 from sqlalchemy import Column, String, Boolean, DateTime, func, Integer
 
 from template.database import Base
@@ -60,7 +61,7 @@ class ApiKeyModel(Base):
     def __init__(
         self,
         name: str,
-        description: str = None,
+        description: Optional[str] = None,
         is_active: bool = True,
     ):
         super().__init__()
