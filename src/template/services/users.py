@@ -100,7 +100,7 @@ class UserService:
 
         return user
 
-    async def _get_by_username(self, username: str) -> UserModel:
+    async def get_by_username(self, username: str) -> UserModel:
         """
         Retrieve an User by its username.
 
@@ -209,7 +209,7 @@ class UserService:
         if not raw_password:
             raise PasswordNotProvidedException()
 
-        user = await self._get_by_username(username)
+        user = await self.get_by_username(username)
 
         if not user:
             raise UserNotFoundException(username)
