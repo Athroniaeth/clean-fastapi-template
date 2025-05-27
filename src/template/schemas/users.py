@@ -1,59 +1,72 @@
 from datetime import datetime
-from typing import Annotated
 
-from passlib.hash import bcrypt  # ty: ignore[unresolved-import]
-from sqlalchemy import String, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column
-
-from template.database import Base
-
-DEFAULT_ROUNDS = 12
+from pydantic import BaseModel, Field, ConfigDict
 
 
-def generate_password_hash(raw_password: str) -> str:
-    """Generate a password hash using bcrypt."""
-    return bcrypt.using(rounds=DEFAULT_ROUNDS).hash(raw_password)
+class UserSelectSchema(BaseModel):
+    """Schema for selecting an User by its identifier.
+
+    Attributes:
+        id (int): The identifier of the User (alias “id”).
+    """
+
+    id: int = Field(...)
 
 
-def check_password_hash(hashed_password: str, raw_password: str) -> bool:
-    """Check if the provided password matches the hashed password."""
-    return bcrypt.verify(raw_password, hashed_password)
+class UserByNameSelectSchema(BaseModel):
+    """Schema for selecting an User by its name. (more user friendly)
+
+    Attributes:
+        username (str): The human-readable name of the User.
+    """
+
+    username: str = Field(..., max_length=64)
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class UserBaseSchema(UserByNameSelectSchema):
+    """Shared properties for User input and output operations.
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        autoincrement=True,
-    )
-    username: Mapped[Annotated[str, 64]] = mapped_column(
-        String(64),
-        nullable=False,
-        unique=True,
-    )
-    hashed_password: Mapped[str] = mapped_column(
-        String(128),
-        nullable=False,
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
+    Attributes:
+        username (str): Human-readable name of the User.
+    """
 
-    def __init__(self, username: str, raw_password: str) -> None:
-        super().__init__()
-        self.username = username
-        self.hashed_password = generate_password_hash(raw_password)
+    username: str = Field(..., max_length=64)
+    model_config = ConfigDict(from_attributes=True)
 
-    def check_password(self, raw_password: str) -> bool:
-        """Validate a raw password against the hashed one.
 
-        Args:
-            raw_password (str): User input password.
+class UserCreateSchema(UserBaseSchema):
+    """Schema for creating a new User."""
 
-        Returns:
-            bool: True if match, else False.
-        """
-        return check_password_hash(self.hashed_password, raw_password)
+    raw_password: str = Field(..., min_length=8, max_length=128)
+
+
+class UserUpdateSchema(UserBaseSchema):
+    """Schema for full replacement (PUT) of an existing User."""
+
+    ...
+
+
+class UserReadResponse(UserSelectSchema, UserBaseSchema):
+    """Schema returned for User data in responses.
+
+    Attributes:
+        id (int): The identifier of the User.
+        username (str): Name of the User.
+        created_at (datetime): Timestamp when the key was created.
+    """
+
+    created_at: datetime
+
+
+class UserReadResponseSchema(UserReadResponse):
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                UserReadResponse(
+                    id=1,
+                    username="example_user",
+                    created_at=datetime.now(),
+                ).model_dump()
+            ]
+        }
+    }

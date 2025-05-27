@@ -3,11 +3,12 @@ from typing import Optional, Sequence
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.template.schemas.users import UserModel  # Import here to avoid circular import
+from template.models.users import UserModel  # Import here to avoid circular import
 
 
 class UserRepository:
     """Repository for user-related database operations."""
+
     _session: AsyncSession
 
     def __init__(self, session: AsyncSession):

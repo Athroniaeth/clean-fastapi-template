@@ -130,7 +130,7 @@ class APIKeyRepository:
         stmt = update(ApiKeyModel).where(ApiKeyModel.id == api_key.id).values(**data)
         result = await self._session.execute(stmt)
         await self._session.commit()
-        
+
         # rowcount is bad typed by SQLAlchemy, so we use type: ignore
         return result.rowcount > 0  # type: ignore
 
