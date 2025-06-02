@@ -11,6 +11,7 @@ def lint():
     subprocess.run("uv run ruff format .", shell=True)
     subprocess.run("uv run ruff check --fix .", shell=True)
     subprocess.run("ty check src", shell=True)
+    subprocess.run("vulture src --min-confidence 80", shell=True)
 
 
 def cli():

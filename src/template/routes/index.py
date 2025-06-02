@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 
 from template.core.state import Request
 from template.routes.api_keys import keys_router
@@ -34,18 +34,20 @@ async def protected(user: UserReadResponse = Depends(get_current_user)):
     return {"status": "ok", "user": user.username}
 
 
-@index_router.post("/login")
-async def login(
-    schema: UserCreateSchema,
-    service: AuthService = Depends(get_auth_service),
+@index_router.post("/auth/token")
+async def login_for_access_token(
+    username: str = Form(...),
+    password: str = Form(...),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """Login endpoint of the application."""
-    token = await service.login(
+    schema = UserCreateSchema(username=username, raw_password=password)
+
+    token = await auth_service.login(
         username=schema.username,
         password=schema.raw_password,
     )
-    user = await service.get_current_user(token=token)
-    return {"status": "ok", "user": user.username}
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @index_router.post("/register")
