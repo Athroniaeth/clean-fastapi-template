@@ -18,6 +18,8 @@ dependencies = [
     "python-jose>=3.4.0",
     "bcrypt>=4.3.0",
     "passlib>=1.7.4",
+    "aioboto3>=14.3.0",
+    "botocore>=1.37.3",
 ]
 
 [project.scripts]
