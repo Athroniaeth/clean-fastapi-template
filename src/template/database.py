@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
+import aioboto3
+from botocore.client import BaseClient
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+from template.settings import get_settings
 
 """url = URL.create(
     drivername="postgresql",
@@ -61,3 +65,21 @@ async def create_database() -> None:
     """Create the database from the models."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+@asynccontextmanager
+async def get_s3_client() -> AsyncIterator[BaseClient]:
+    """Get the S3 client."""
+    settings = get_settings()
+    s3_session = aioboto3.Session()
+
+    async with s3_session.client(
+        "s3",
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key_id,
+        aws_secret_access_key=settings.s3_secret_access_key,
+        endpoint_url=f"{settings.s3_endpoint_url}",
+    ) as s3_client:
+        print(f"S3 client created with endpoint: {settings.s3_endpoint_url}")
+        yield s3_client
+        print("S3 client closed.")

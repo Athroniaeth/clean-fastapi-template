@@ -2,7 +2,7 @@ import os
 from abc import ABC
 from enum import Enum
 
-from pydantic import Field, ConfigDict
+from pydantic import Field, ConfigDict, HttpUrl
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
@@ -61,6 +61,12 @@ class Settings(ABC, BaseSettings):
 
     postgres_url: URL = Field(..., alias="DATABASE_URL")
 
+    s3_bucket: str = Field(..., alias="S3_BUCKET")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
+    s3_endpoint_url: HttpUrl | None = Field(default=None, alias="S3_ENDPOINT_URL")  # Optional for localstack/minio
+    s3_access_key_id: str = Field(..., alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(..., alias="S3_SECRET_ACCESS_KEY")
+
     @property
     def database_url(self) -> str:
         """Get the database URL without hiding the password."""
@@ -75,6 +81,12 @@ class DevelopmentSettings(Settings):
         ),
         alias="DATABASE_URL",
     )
+
+    s3_bucket: str = Field("test-bucket", alias="S3_BUCKET")
+    s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
+    s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
+    s3_access_key_id: str = Field("None", alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field("None", alias="S3_SECRET_ACCESS_KEY")
 
 
 class ProductionSettings(Settings):
