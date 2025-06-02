@@ -17,6 +17,19 @@ class UserException(APIException):
         self.detail = detail
 
 
+class UserAlreadyExistsException(UserException):
+    """Raised when trying to create a User that already exists."""
+
+    status_code = status.HTTP_409_CONFLICT
+    detail = "User with username '{username}' already exists."
+
+    def __init__(self, username: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(username=username),
+        )
+
+
 class UserNotFoundException(UserException):
     """Raised when a User is not found in the database."""
 
@@ -160,6 +173,10 @@ class UserService:
         Returns:
             UserCreateResponseSchema: the created user + its raw plain_user.
         """
+        # Check if user already exists (handle sql integrity errors)
+        if await self._repo.get_by_username(data.username):
+            raise UserAlreadyExistsException(data.username)
+
         # Build model (generates & hashes raw_user internally)
         model = UserModel(username=data.username, raw_password=data.raw_password)
 

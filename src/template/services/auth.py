@@ -4,9 +4,12 @@ from typing import Optional
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.core.exceptions import APIException
-from template.schemas.users import UserReadResponse
+from template.database import inject_db
+from template.repositories.users import UserRepository
+from template.schemas.users import UserReadResponse, UserCreateSchema
 from template.services.users import UserService, UserNotFoundException
 
 
@@ -100,3 +103,39 @@ class AuthService:
             raise JWTCredentialInvalidException()
 
         return UserReadResponse.model_validate(user_model)
+
+    async def register(self, schema: UserCreateSchema) -> UserReadResponse:
+        await self._user_service.create(schema)
+        token = await self.login(username=schema.username, password=schema.raw_password)
+        user = await self.get_current_user(token=token)
+        return user
+
+
+def get_user_service(session: AsyncSession = Depends(inject_db)) -> UserService:
+    """
+    Provide a new UserService instance.
+    """
+    repo = UserRepository(session)
+    return UserService(repo)
+
+
+def get_auth_service(user_service: UserService = Depends(get_user_service)) -> AuthService:
+    """
+    Provide a new AuthService instance with its dependencies resolved.
+    """
+    return AuthService(
+        user_service,
+        jwt_secret_key="your_jwt_secret_key",
+        jwt_algorithm="HS256",
+        jwt_exp_minutes=15,
+    )
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> UserReadResponse:
+    """
+    Decode the token and retrieve the corresponding user.
+    """
+    return await auth_service.get_current_user(token)

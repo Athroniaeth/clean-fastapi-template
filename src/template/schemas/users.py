@@ -30,7 +30,6 @@ class UserBaseSchema(UserByNameSelectSchema):
         username (str): Human-readable name of the User.
     """
 
-    username: str = Field(..., max_length=64)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -38,6 +37,8 @@ class UserCreateSchema(UserBaseSchema):
     """Schema for creating a new User."""
 
     raw_password: str = Field(..., min_length=8, max_length=128)
+
+    model_config = ConfigDict(json_schema_extra={"examples": [{"username": "user", "raw_password": "example_password"}]})
 
 
 class UserUpdateSchema(UserBaseSchema):
