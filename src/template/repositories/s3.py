@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, AsyncIterator, Optional
+from typing import Generic, TypeVar, Optional, List
 
 from aiobotocore.client import AioBaseClient
 from botocore.exceptions import ClientError
@@ -11,7 +11,7 @@ T = TypeVar("T")
 
 
 class AbstractS3Repository(Generic[T], ABC):
-    """Generic *async repository, persisting Python objects to S3."""
+    """Generic async repository, persisting Python objects to S3."""
 
     def __init__(
         self,
@@ -41,7 +41,7 @@ class AbstractS3Repository(Generic[T], ABC):
         suffix = f".{self.extension}" if self.extension and not identifier.endswith(f".{self.extension}") else ""
         return f"{self.prefix}{identifier}{suffix}"
 
-    async def _exists(self, key: str) -> bool:
+    async def exists(self, key: str) -> bool:
         """Check if an object with the given key exists in the S3 bucket."""
         try:
             await self.s3.head_object(Bucket=self.bucket, Key=key)
@@ -51,14 +51,10 @@ class AbstractS3Repository(Generic[T], ABC):
                 return False
             raise  # re‑raise unexpected problems
 
-    async def create(self, identifier: str, obj: T) -> bool:
+    async def save(self, identifier: str, obj: T) -> bool:
         """Serialize obj and upload it to S3 under the given identifier."""
         key = self._key(identifier)
         data = self.serialize(obj)
-
-        if await self._exists(key):
-            return False
-
         await self.s3.put_object(Bucket=self.bucket, Key=key, Body=data)
         return True
 
@@ -66,24 +62,26 @@ class AbstractS3Repository(Generic[T], ABC):
         """Download and deserialize an object from S3 using the given identifier."""
         key = self._key(identifier)
 
-        if not await self._exists(key):
+        if not await self.exists(key):
             return None
 
         response = await self.s3.get_object(Bucket=self.bucket, Key=key)
         payload: bytes = await response["Body"].read()
         return self.deserialize(payload)
 
-    async def delete(self, identifier: str) -> None:
+    async def delete(self, identifier: str) -> bool:
         """Delete an object from S3 using the given identifier."""
         key = self._key(identifier)
 
-        if not await self._exists(key):
-            raise FileNotFoundError(f"Object '{key}' does not exist.")
+        if not await self.exists(key):
+            return False
 
         await self.s3.delete_object(Bucket=self.bucket, Key=key)
+        return True
 
-    async def list(self) -> AsyncIterator[str]:
+    async def list(self) -> List[str]:
         """List all objects in the S3 bucket matching the prefix and extension."""
+        list_identifiers = []
         paginator = self.s3.get_paginator("list_objects_v2")
 
         async for page in paginator.paginate(Bucket=self.bucket, Prefix=self.prefix):
@@ -91,4 +89,7 @@ class AbstractS3Repository(Generic[T], ABC):
                 key: str = obj["Key"]
                 if self.extension and not key.endswith(f".{self.extension}"):
                     continue
-                yield key[len(self.prefix) :].removesuffix(f".{self.extension}")
+                identifier = key[len(self.prefix) :].removesuffix(f".{self.extension}")
+                list_identifiers.append(identifier)
+
+        return list_identifiers
