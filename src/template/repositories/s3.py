@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, List
+from typing import Generic, TypeVar, Optional, List, Type
 
 from aiobotocore.client import AioBaseClient
 from botocore.exceptions import ClientError
@@ -17,12 +17,13 @@ class AbstractS3Repository(Generic[T], ABC):
         self,
         s3_client: AioBaseClient,
         bucket: str,
-        *,
+        type_object: Type[T],
         prefix: str = "",
         extension: str = "",
     ) -> None:
         self.s3 = s3_client
         self.bucket = bucket
+        self.type_object = type_object
         self.prefix = prefix.rstrip("/") + ("/" if prefix else "")
         self.extension = extension.lstrip(".")
 
