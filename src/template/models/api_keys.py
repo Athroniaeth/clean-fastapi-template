@@ -4,7 +4,7 @@ from typing import Optional
 from passlib.hash import bcrypt  # ty: ignore[unresolved-import]
 from sqlalchemy import Column, String, Boolean, DateTime, func, Integer
 
-from template.database import Base
+from template.infrastructure.database import Base
 
 DEFAULT_ROUNDS = 12
 

@@ -1,4 +1,5 @@
 import logging
+import pickle
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Optional, List, Type
 
@@ -94,3 +95,34 @@ class AbstractS3Repository(Generic[T], ABC):
                 list_identifiers.append(identifier)
 
         return list_identifiers
+
+
+class PickleRepository(AbstractS3Repository, Generic[T]):
+    """Repository in charge of persisting pickled objects to S3.
+
+    This version expects the client to be injected (e.g. via FastAPI lifespan or DI).
+    """
+
+    def __init__(
+        self,
+        s3_client: AioBaseClient,
+        bucket: str,
+        type_object: Type[T],
+        prefix: str = "",
+        extension: str = "",
+    ) -> None:
+        super().__init__(
+            s3_client,
+            bucket,
+            type_object,
+            prefix=prefix,
+            extension=extension,
+        )
+
+    def serialize(self, obj: T) -> bytes:
+        """Convert obj to raw bytes ready for S3 upload."""
+        return pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def deserialize(self, payload: bytes) -> T:
+        """Transform raw bytes downloaded from S3 back into an object of type T."""
+        return pickle.loads(payload)

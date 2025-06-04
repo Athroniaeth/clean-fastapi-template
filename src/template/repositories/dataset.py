@@ -3,7 +3,7 @@ import io
 import polars as pl
 from aiobotocore.client import AioBaseClient
 
-from template.repositories.s3 import AbstractS3Repository
+from template.infrastructure.s3 import AbstractS3Repository
 
 
 class DatasetRepository(AbstractS3Repository[pl.DataFrame]):

@@ -10,7 +10,7 @@ from httpx import AsyncClient
 from loguru import logger
 
 from template import PROJECT_PATH
-from template.database import create_database
+from template.infrastructure.database import create_database
 
 
 class Level(StrEnum):

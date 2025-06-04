@@ -7,7 +7,7 @@ from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.core.exceptions import APIException
-from template.database import inject_db
+from template.infrastructure.database import inject_db
 from template.repositories.users import UserRepository
 from template.schemas.users import UserReadResponse, UserCreateSchema
 from template.services.users import UserService, UserNotFoundException

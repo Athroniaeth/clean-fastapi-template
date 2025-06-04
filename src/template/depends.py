@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.database import inject_db
+from template.infrastructure.database import inject_db
 from template.repositories.api_keys import APIKeyRepository
 from template.services.api_keys import api_key_header, APIKeyService
 

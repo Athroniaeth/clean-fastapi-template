@@ -6,7 +6,7 @@ from httpx import AsyncClient, ASGITransport
 from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
-from template.database import Base
+from template.infrastructure.database import Base
 from template.app import create_app
 
 
