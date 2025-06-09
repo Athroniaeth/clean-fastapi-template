@@ -12,7 +12,7 @@ cli_dataset = AsyncTyper(
 )
 
 
-async def _get_service():  # noqa
+async def get_service_dataset():  # noqa
     """Get the dataset service."""
     from template.services.dataset import DatasetService
     from template.repositories.dataset import DatasetRepository
@@ -39,7 +39,7 @@ async def get_dataset(
 
     from template.services.dataset import DatasetService
 
-    service: DatasetService = await _get_service()
+    service: DatasetService = await get_service_dataset()
     dataset = await service.get(identifier)
     typer.echo(f"Dataset '{identifier}':")
     typer.echo(dataset.head(1))
@@ -62,7 +62,7 @@ async def create_dataset(
 
     content = path.read_text(encoding="utf-8")
 
-    service: DatasetService = await _get_service()
+    service: DatasetService = await get_service_dataset()
     dataset = await service.create(identifier, content)
     typer.echo(f"Dataset '{identifier}' created successfully.")
     return dataset
@@ -76,7 +76,7 @@ async def delete_dataset(
 
     from template.services.dataset import DatasetService
 
-    service: DatasetService = await _get_service()
+    service: DatasetService = await get_service_dataset()
     await service.delete(identifier)
     typer.echo(f"Dataset '{identifier}' deleted successfully.")
 
@@ -87,7 +87,7 @@ async def list_datasets():
 
     from template.services.dataset import DatasetService
 
-    service: DatasetService = await _get_service()
+    service: DatasetService = await get_service_dataset()
     datasets = await service.list()
 
     if not datasets:

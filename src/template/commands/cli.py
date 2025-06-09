@@ -8,6 +8,7 @@ from typer import Typer
 
 from template.commands.api_keys import cli_keys
 from template.commands.dataset import cli_dataset
+from template.commands.tokenizer import cli_tokenizer
 from template.core.state import Level
 
 LoggingLevel = Annotated[Level, typer.Option("--logging-level", "-l", help="Log level of the application.")]
@@ -20,6 +21,7 @@ cli = Typer(
 )
 cli.add_typer(cli_keys)
 cli.add_typer(cli_dataset)
+cli.add_typer(cli_tokenizer)
 
 
 def _get_workers(expected_workers: int) -> Optional[int]:
