@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Type
 
-import polars as pl
 
+from template.domain.dataset import NLPDataset
+from template.domain.tokenizer import CharTokenizer, Tokenizer
 from template.repositories.dataset import DatasetRepository
 
 
@@ -32,7 +33,7 @@ class DatasetService:
     def __init__(self, repo: DatasetRepository):
         self.repo = repo
 
-    async def get(self, identifier: str) -> pl.DataFrame:
+    async def get(self, identifier: str) -> NLPDataset:
         """
         Get the path of a dataset by its identifier.
 
@@ -49,7 +50,12 @@ class DatasetService:
 
         return df
 
-    async def create(self, identifier: str, text: str) -> pl.DataFrame:
+    async def create(
+        self,
+        identifier: str,
+        text: str,
+        type_tokenizer: Type[Tokenizer] = CharTokenizer,
+    ) -> NLPDataset:
         """
         Create a dataset from the raw data.
 
@@ -65,9 +71,12 @@ class DatasetService:
             raise FileExistsError(f"Dataset '{identifier}' already exists.")
 
         dataset = _preprocess(text)
-        df = pl.DataFrame({DEFAULT_COLUMN_NAME: dataset})
-        await self.repo.save(identifier, df)
-        return df
+        dataset = NLPDataset(
+            sentences=dataset,
+            type_tokenizer=type_tokenizer,
+        )
+        await self.repo.save(identifier, dataset)
+        return dataset
 
     async def delete(self, identifier: str) -> None:
         """

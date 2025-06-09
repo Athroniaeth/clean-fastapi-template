@@ -8,6 +8,7 @@ from typer import Typer
 
 from template.commands.api_keys import cli_keys
 from template.commands.dataset import cli_dataset
+from template.commands.ml import cli_ml
 from template.commands.tokenizer import cli_tokenizer
 from template.core.state import Level
 
@@ -22,6 +23,7 @@ cli = Typer(
 cli.add_typer(cli_keys)
 cli.add_typer(cli_dataset)
 cli.add_typer(cli_tokenizer)
+cli.add_typer(cli_ml)
 
 
 def _get_workers(expected_workers: int) -> Optional[int]:
