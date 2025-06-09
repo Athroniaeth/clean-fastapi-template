@@ -29,7 +29,7 @@ class NLPModel(ABC, nn.Module):
         self.tokenizer = tokenizer
 
     @property
-    def device(self):
+    def device(self) -> torch.device:
         """Get the device of the model."""
         return next(self.parameters()).device
 
@@ -37,6 +37,70 @@ class NLPModel(ABC, nn.Module):
     def forward(self, idx: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model given input indices."""
         raise NotImplementedError("Subclasses must implement forward method.")
+
+    def generate_city_name(
+        self,
+        start_tokens: str = "",
+        max_length: int = 30,
+        temperature: float = 1.0,
+        top_k: int = 0,
+        top_p: float = 1.0,
+    ):
+        temperature = max(temperature, 1e-6)
+        self.eval()
+        device = self.device
+
+        current_input = torch.tensor([[self.tokenizer.sos_index]], device=device)
+
+        if start_tokens:
+            start_tokens_encoded = self.tokenizer.encode(start_tokens)
+            start_tokens_tensor = torch.tensor([start_tokens_encoded], device=device)
+            current_input = torch.cat([current_input, start_tokens_tensor], dim=1)
+            generated_indices = [self.tokenizer.sos_index] + start_tokens_encoded
+        else:
+            generated_indices = [self.tokenizer.sos_index]
+
+        with torch.no_grad():
+            for _ in range(max_length):
+                logits = self(current_input)[:, -1, :]  # (batch_size, vocab_size)
+                logits = logits / temperature
+
+                # Apply top-k filtering
+                if top_k > 0:
+                    top_k_values, top_k_indices = torch.topk(logits, top_k)
+                    mask = torch.full_like(logits, float("-inf"))
+                    logits = mask.scatter(1, top_k_indices, top_k_values)
+
+                # Apply top-p (nucleus) filtering
+                if top_p < 1.0:
+                    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+                    probs = F.softmax(sorted_logits, dim=-1)
+                    cumulative_probs = torch.cumsum(probs, dim=-1)
+
+                    sorted_mask = cumulative_probs > top_p
+                    # Shift mask right to include at least one token
+                    sorted_mask[..., 1:] = sorted_mask[..., :-1].clone()
+                    sorted_mask[..., 0] = 0
+
+                    sorted_logits[sorted_mask] = float("-inf")
+                    logits = logits.scatter(1, sorted_indices, sorted_logits)
+
+                probs = F.softmax(logits, dim=-1)
+                next_token = torch.multinomial(probs, 1).item()
+
+                if next_token == self.tokenizer.token_to_index[self.tokenizer.eos_token]:
+                    break
+
+                generated_indices.append(next_token)
+
+                next_token_tensor = torch.tensor([[next_token]], device=device)
+                current_input = torch.cat([current_input, next_token_tensor], dim=1)
+
+                if current_input.size(1) > self.n_context:
+                    current_input = current_input[:, -self.n_context :]
+
+        generated_chars = self.tokenizer.decode(generated_indices[1:])  # Skip SOS
+        return "".join(generated_chars)
 
 
 class BengioMLP(NLPModel):

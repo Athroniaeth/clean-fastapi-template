@@ -61,7 +61,7 @@ class DatasetService:
             pl.DataFrame: The created dataset (polars DataFrame).
         """
         # Fast failure if the identifier already exists (prevents unnecessary processing)
-        if self.repo.exists(identifier):
+        if await self.repo.exists(identifier):
             raise FileExistsError(f"Dataset '{identifier}' already exists.")
 
         dataset = _preprocess(text)
@@ -76,7 +76,7 @@ class DatasetService:
         Args:
             identifier (str): The identifier of the dataset.
         """
-        if not self.repo.delete(identifier):
+        if not await self.repo.delete(identifier):
             raise FileNotFoundError(f"Dataset '{identifier}' does not exist.")
 
     async def list(self) -> List[str]:

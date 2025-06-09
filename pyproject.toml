@@ -23,6 +23,7 @@ dependencies = [
     "moto[server]>=5.1.5",
     "polars>=1.30.0",
     "torch>=2.7.1",
+    "tqdm>=4.67.1",
 ]
 
 [tool.uv.sources]

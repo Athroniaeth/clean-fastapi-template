@@ -1,5 +1,6 @@
 import logging
 
+from dotenv import load_dotenv
 from loguru import logger
 
 
@@ -10,6 +11,9 @@ def main():
     # Disable useless warnings
     # https://github.com/pyca/bcrypt/issues/684#issuecomment-1858400267
     logging.getLogger("passlib").setLevel(logging.ERROR)
+
+    # Loading environment variables from .env file
+    load_dotenv()
 
     try:
         cli()

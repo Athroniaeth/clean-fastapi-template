@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 from template.domain.tokenizer import Tokenizer, CharTokenizer
 
 
-class VilleDataset(Dataset):
+class NLPDataset(Dataset):
     """A simple dataset for character-level tokenization."""
 
     sentences: Sequence[str]

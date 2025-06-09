@@ -252,5 +252,5 @@ cython_debug/
 .idea/
 
 # Ignore data folder (docker volume)
-!data/.gitkeep
-data/db.sqlite
+!data/raw_data/.gitkeep
+data/

@@ -3,6 +3,7 @@ from typing import AsyncIterator
 
 import aioboto3
 from botocore.client import BaseClient
+from loguru import logger
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
@@ -80,6 +81,14 @@ async def get_s3_client() -> AsyncIterator[BaseClient]:
         aws_secret_access_key=settings.s3_secret_access_key,
         endpoint_url=f"{settings.s3_endpoint_url}",
     ) as s3_client:
-        print(f"S3 client created with endpoint: {settings.s3_endpoint_url}")
+        # Create bucket if it does not exist
+        logger.debug(f"Checking if bucket {settings.s3_bucket} exists...")
+        if not await s3_client.head_bucket(Bucket=settings.s3_bucket):
+            logger.debug(f"{settings.s3_bucket} / {settings.s3_region}")
+            await s3_client.create_bucket(
+                Bucket=settings.s3_bucket, CreateBucketConfiguration={"LocationConstraint": settings.s3_region}
+            )
+
+        logger.debug(f"S3 client created with endpoint: {settings.s3_endpoint_url}")
         yield s3_client
-        print("S3 client closed.")
+        logger.debug("S3 client closed.")

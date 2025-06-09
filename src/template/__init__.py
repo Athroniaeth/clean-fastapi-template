@@ -24,3 +24,4 @@ def cli():
 # Global variables of the project
 PROJECT_PATH = Path(__file__).parents[2]
 DATA_PATH = PROJECT_PATH / "data"
+RAW_DATA_PATH = DATA_PATH / "raw_data"

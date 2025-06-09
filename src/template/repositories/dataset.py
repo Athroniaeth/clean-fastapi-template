@@ -17,7 +17,13 @@ class DatasetRepository(AbstractS3Repository[pl.DataFrame]):
         prefix: str = "datasets/",
         raw_prefix: str = "raw/",
     ) -> None:
-        super().__init__(s3_client, bucket, prefix=prefix, extension="parquet")
+        super().__init__(
+            s3_client,
+            type_object=pl.DataFrame,
+            bucket=bucket,
+            prefix=prefix,
+            extension="parquet",
+        )
         self.raw_prefix = raw_prefix.rstrip("/") + "/"
 
     def serialize(self, obj: pl.DataFrame) -> bytes:
