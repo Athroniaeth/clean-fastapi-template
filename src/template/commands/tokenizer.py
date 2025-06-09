@@ -2,7 +2,6 @@ import typer
 
 from template.commands.dataset import get_service_dataset
 from template.core.cli import AsyncTyper
-from template.domain.tokenizer import Tokenizer
 
 cli_tokenizer = AsyncTyper(
     name="tokenizer",
@@ -34,9 +33,8 @@ async def get_service_tokenizer():  # noqa
 @cli_tokenizer.command(name="get")
 async def get_tokenizer(
     identifier: str = typer.Argument(..., help="Tokenizer identifier to get"),
-) -> Tokenizer:
+):
     """Get a tokenizer by its identifier."""
-
     from template.services.tokenizer import TokenizerService
 
     service: TokenizerService = await get_service_tokenizer()
@@ -50,7 +48,7 @@ async def get_tokenizer(
 async def create_tokenizer(
     dataset: str = typer.Argument(..., help="Raw data as a string"),
     identifier: str = typer.Argument("default", help="Tokenizer identifier to create"),
-) -> Tokenizer:
+):
     """Create a tokenizer from the raw data."""
 
     from template.services.tokenizer import TokenizerService
@@ -61,9 +59,8 @@ async def create_tokenizer(
     service_tokenizer: TokenizerService = await get_service_tokenizer()
 
     dataset = await service_dataset.get(identifier=dataset)
-    tokenizer = await service_tokenizer.create(identifier, dataset)
+    await service_tokenizer.create(identifier, dataset)
     typer.echo(f"Tokenizer '{identifier}' created successfully.")
-    return tokenizer
 
 
 @cli_tokenizer.command(name="delete")

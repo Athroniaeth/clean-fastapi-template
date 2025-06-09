@@ -1,7 +1,6 @@
 import tomllib
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, fields
-from enum import StrEnum
 from typing import Mapping, AsyncGenerator, Any  # type: ignore[import]
 
 from fastapi import FastAPI as _FastAPI
@@ -11,25 +10,6 @@ from loguru import logger
 
 from template import PROJECT_PATH
 from template.infrastructure.database import create_database
-
-
-class Level(StrEnum):
-    """
-    Log levels used to trace application execution.
-
-    Attributes:
-        TRACE   : Very fine-grained details for deep debugging.
-        DEBUG   : Debugging information for developers.
-        INFO    : General operational events.
-        WARNING : Unexpected behavior that doesn't stop execution.
-        ERROR   : Critical issues that affect functionality.
-    """
-
-    TRACE = "TRACE"
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
 
 
 @dataclass

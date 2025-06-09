@@ -6,8 +6,6 @@ from tqdm import tqdm
 from template.commands.dataset import get_service_dataset
 from template.commands.tokenizer import get_service_tokenizer
 from template.core.cli import AsyncTyper
-from template.repositories.ml import MLRepository
-from template.services.ml import MLService
 
 cli_ml = AsyncTyper(
     name="ml",
@@ -21,6 +19,8 @@ async def get_service_ml():  # noqa
     """Get the tokenizer service."""
     from template.infrastructure.database import get_s3_client
 
+    from template.repositories.ml import MLRepository
+    from template.services.ml import MLService
     from template.settings import get_settings
 
     settings = get_settings()

@@ -1,10 +1,12 @@
+import io
+
+import polars as pl
 from aiobotocore.client import AioBaseClient
 
-from template.domain.dataset import NLPDataset
-from template.infrastructure.s3 import PickleRepository
+from template.infrastructure.s3 import AbstractS3Repository
 
 
-class DatasetRepository(PickleRepository[NLPDataset]):
+class DatasetRepository(AbstractS3Repository[pl.DataFrame]):
     """Specialised repository persisting Polars DataFrame objects as Parquet."""
 
     def __init__(
@@ -17,9 +19,17 @@ class DatasetRepository(PickleRepository[NLPDataset]):
     ) -> None:
         super().__init__(
             s3_client,
-            type_object=NLPDataset,
+            type_object=pl.DataFrame,
             bucket=bucket,
             prefix=prefix,
             extension="parquet",
         )
         self.raw_prefix = raw_prefix.rstrip("/") + "/"
+
+    def serialize(self, obj: pl.DataFrame) -> bytes:
+        buf = io.BytesIO()
+        obj.write_parquet(buf)
+        return buf.getvalue()
+
+    def deserialize(self, payload: bytes) -> pl.DataFrame:
+        return pl.read_parquet(io.BytesIO(payload))

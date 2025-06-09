@@ -42,7 +42,7 @@ async def get_dataset(
     service: DatasetService = await get_service_dataset()
     dataset = await service.get(identifier)
     typer.echo(f"Dataset '{identifier}':")
-    typer.echo(dataset.head(1))
+    typer.echo(dataset)
     return dataset
 
 

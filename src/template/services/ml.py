@@ -1,5 +1,6 @@
 from typing import List
 
+import polars
 import torch
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
@@ -8,6 +9,7 @@ from template.domain.dataset import NLPDataset
 from template.domain.ml import NLPModel, BengioMLP
 from template.domain.tokenizer import Tokenizer
 from template.repositories.ml import MLRepository
+from template.services.dataset import DEFAULT_COLUMN_NAME
 from template.utils import train_model, split_dataset
 
 
@@ -37,7 +39,7 @@ class MLService:
     async def create(
         self,
         identifier: str,
-        dataset: NLPDataset,
+        dataset: polars.DataFrame,
         tokenizer: Tokenizer,
         device: str = "cuda",
         batch_size: int = 256,
@@ -78,6 +80,13 @@ class MLService:
         # Fast failure if the identifier already exists (prevents unnecessary processing)
         if await self.repo.exists(identifier):
             raise FileExistsError(f"Tokenizer '{identifier}' already exists.")
+
+        sentences = dataset[DEFAULT_COLUMN_NAME].to_list()
+
+        dataset = NLPDataset(
+            sentences=sentences,
+            type_tokenizer=type(tokenizer),
+        )
 
         train_loader, test_loader, val_loader = split_dataset(
             dataset,
