@@ -14,14 +14,20 @@ cli_tokenizer = AsyncTyper(
 async def get_service_tokenizer():  # noqa
     """Get the tokenizer service."""
     from template.repositories.tokenizer import TokenizerRepository
-    from template.infrastructure.s3 import get_s3_client
+    from template.infrastructure.s3 import create_s3
 
     from template.services.tokenizer import TokenizerService
     from template.settings import get_settings
 
     settings = get_settings()
 
-    async with get_s3_client() as s3_client:
+    async with create_s3(
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key,
+        aws_secret_access_key=settings.s3_secret_key,
+        endpoint_url=settings.s3_endpoint_url,
+        bucket=settings.s3_bucket,
+    ) as s3_client:
         repo = TokenizerRepository(
             s3_client=s3_client,
             bucket=settings.s3_bucket,
@@ -51,12 +57,8 @@ async def create_tokenizer(
 ):
     """Create a tokenizer from the raw data."""
 
-    from template.services.tokenizer import TokenizerService
-
-    from template.services.dataset import DatasetService
-
-    service_dataset: DatasetService = await get_service_dataset()
-    service_tokenizer: TokenizerService = await get_service_tokenizer()
+    service_dataset = await get_service_dataset()
+    service_tokenizer = await get_service_tokenizer()
 
     dataset = await service_dataset.get(identifier=dataset)
     await service_tokenizer.create(identifier, dataset)
@@ -69,9 +71,7 @@ async def delete_tokenizer(
 ):
     """Delete a tokenizer by its identifier."""
 
-    from template.services.tokenizer import TokenizerService
-
-    service: TokenizerService = await get_service_tokenizer()
+    service = await get_service_tokenizer()
     await service.delete(identifier)
     typer.echo(f"Tokenizer '{identifier}' deleted successfully.")
 
@@ -80,9 +80,7 @@ async def delete_tokenizer(
 async def list_tokenizers():
     """List all tokenizers in the repository."""
 
-    from template.services.tokenizer import TokenizerService
-
-    service: TokenizerService = await get_service_tokenizer()
+    service = await get_service_tokenizer()
     tokenizers = await service.list()
 
     if not tokenizers:

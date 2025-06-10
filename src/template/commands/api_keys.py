@@ -21,7 +21,11 @@ async def get_service():
     from template.repositories.api_keys import APIKeyRepository
     from template.services.api_keys import APIKeyService
 
-    async with get_db() as session:
+    from template.settings import get_settings
+
+    settings = get_settings()
+
+    async with get_db(settings.database_url) as session:
         repo = APIKeyRepository(session)
         yield APIKeyService(repo)
         await session.close()

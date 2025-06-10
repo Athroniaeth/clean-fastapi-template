@@ -39,7 +39,7 @@ class MLService:
     async def create(
         self,
         identifier: str,
-        dataframe: polars.DataFrame,
+        dataset: polars.DataFrame,
         tokenizer: Tokenizer,
         device: str = "cuda",
         batch_size: int = 256,
@@ -59,7 +59,7 @@ class MLService:
 
         Args:
             identifier (str): The identifier for the dataset (file name without extension).
-            dataset (NLPDataset): The dataset to create the tokenizer from.
+            dataset (polars.DataFrame): The raw data as a polars DataFrame.
             tokenizer (Tokenizer): The tokenizer to use for the dataset.
             device (str): The device to use for training (default: "cuda").
             batch_size (int): The batch size for training (default: 256).
@@ -81,7 +81,7 @@ class MLService:
         if await self.repo.exists(identifier):
             raise FileExistsError(f"Tokenizer '{identifier}' already exists.")
 
-        sentences = dataframe[DEFAULT_COLUMN_NAME].to_list()
+        sentences = dataset[DEFAULT_COLUMN_NAME].to_list()
 
         dataset = NLPDataset(
             sentences=sentences,

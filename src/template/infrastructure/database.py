@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import AsyncIterator, Type
 
-from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncEngine, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 
@@ -10,7 +10,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 @lru_cache(maxsize=3)
-async def get_db(database_url: str, base: Type[DeclarativeBase] = Base) -> (AsyncSession, AsyncEngine):
+async def create_db(database_url: str, base: Type[DeclarativeBase] = Base) -> sessionmaker[AsyncSession]:
     # Create an async engine
     engine = create_async_engine(
         url=database_url,
@@ -24,13 +24,17 @@ async def get_db(database_url: str, base: Type[DeclarativeBase] = Base) -> (Asyn
         class_=AsyncSession,
         expire_on_commit=False,
     )
-    await create_database(engine, base)
+
+    # Create the database schema
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+
     return async_session
 
 
-async def _inject_db(database_url: str, base: Type[DeclarativeBase] = Base) -> AsyncIterator[AsyncSession]:
+async def get_db(database_url: str, base: Type[DeclarativeBase] = Base) -> AsyncIterator[AsyncSession]:
     """Get the database session."""
-    async_session = get_db(database_url, base)
+    async_session = await create_db(database_url, base)
 
     async with async_session() as session:
         try:
@@ -40,9 +44,3 @@ async def _inject_db(database_url: str, base: Type[DeclarativeBase] = Base) -> A
             raise
         finally:
             await session.close()
-
-
-async def create_database(engine: AsyncEngine, base: Type[DeclarativeBase]) -> None:
-    """Create the database from the models."""
-    async with engine.begin() as conn:
-        await conn.run_sync(base.metadata.create_all)

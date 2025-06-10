@@ -4,17 +4,17 @@ from typing import Annotated, Optional
 
 import typer
 from loguru import logger
-from typer import Typer
 
 from template.commands.api_keys import cli_keys
 from template.commands.dataset import cli_dataset
 from template.commands.ml import cli_ml
 from template.commands.tokenizer import cli_tokenizer
+from template.core.cli import AsyncTyper
 from template.core.constants import Level
 
 LoggingLevel = Annotated[Level, typer.Option("--logging-level", "-l", help="Log level of the application.")]
 
-cli = Typer(
+cli = AsyncTyper(
     name="template",
     no_args_is_help=True,
     pretty_exceptions_enable=False,

@@ -42,6 +42,7 @@ class TokenizerService:
         Args:
             identifier (str): The identifier for the dataset (file name without extension).
             dataset (pl.DataFrame): The raw data as a polars DataFrame.
+            class_ (Type[Tokenizer]): The tokenizer class to use for the dataset (default: CharTokenizer).
 
         Returns:
             Tokenizer: The created dataset (polars DataFrame).

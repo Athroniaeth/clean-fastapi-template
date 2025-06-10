@@ -17,7 +17,7 @@ cli_ml = AsyncTyper(
 
 async def get_service_ml():  # noqa
     """Get the tokenizer service."""
-    from template.infrastructure.s3 import get_s3_client
+    from template.infrastructure.s3 import create_s3
 
     from template.repositories.ml import MLRepository
     from template.services.ml import MLService
@@ -25,7 +25,13 @@ async def get_service_ml():  # noqa
 
     settings = get_settings()
 
-    async with get_s3_client() as s3_client:
+    async with create_s3(
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key,
+        aws_secret_access_key=settings.s3_secret_key,
+        endpoint_url=settings.s3_endpoint_url,
+        bucket=settings.s3_bucket,
+    ) as s3_client:
         repo = MLRepository(
             s3_client=s3_client,
             bucket=settings.s3_bucket,

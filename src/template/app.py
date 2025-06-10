@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_session
 
 from template.core.state import FastAPI, get_version, State
 from template.core.exceptions import APIException
-from template.infrastructure.database import get_db
+from template.infrastructure.database import create_db
 from template.routes.index import index_router, api_router
 from template.settings import get_settings
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     settings = get_settings()
 
     # Create an async engine
-    async_session = get_db(settings.database_url)
+    async_session = create_db(settings.database_url)
 
     # Create the FastAPI app
     app = create_app(

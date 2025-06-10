@@ -16,13 +16,19 @@ async def get_service_dataset():  # noqa
     """Get the dataset service."""
     from template.services.dataset import DatasetService
     from template.repositories.dataset import DatasetRepository
-    from template.infrastructure.s3 import get_s3_client
+    from template.infrastructure.s3 import create_s3
 
     from template.settings import get_settings
 
     settings = get_settings()
 
-    async with get_s3_client() as s3_client:
+    async with create_s3(
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key,
+        aws_secret_access_key=settings.s3_secret_key,
+        endpoint_url=settings.s3_endpoint_url,
+        bucket=settings.s3_bucket,
+    ) as s3_client:
         repo = DatasetRepository(
             s3_client=s3_client,
             bucket=settings.s3_bucket,
@@ -48,12 +54,10 @@ async def get_dataset(
 
 @cli_dataset.command(name="create")
 async def create_dataset(
-    raw_data: str = typer.Argument(..., help="Raw data as a string"),
+    raw_data: str = typer.Argument(..., help="Raw data identifier (raw data folder)"),
     identifier: str = typer.Argument("default", help="Dataset identifier to create"),
 ) -> pl.DataFrame:
     """Create a dataset from the raw data."""
-
-    from template.services.dataset import DatasetService
 
     path = RAW_DATA_PATH / f"{raw_data}.txt"
 
@@ -62,7 +66,7 @@ async def create_dataset(
 
     content = path.read_text(encoding="utf-8")
 
-    service: DatasetService = await get_service_dataset()
+    service = await get_service_dataset()
     dataset = await service.create(identifier, content)
     typer.echo(f"Dataset '{identifier}' created successfully.")
     return dataset
@@ -74,9 +78,7 @@ async def delete_dataset(
 ):
     """Delete a dataset by its identifier."""
 
-    from template.services.dataset import DatasetService
-
-    service: DatasetService = await get_service_dataset()
+    service = await get_service_dataset()
     await service.delete(identifier)
     typer.echo(f"Dataset '{identifier}' deleted successfully.")
 
@@ -85,9 +87,7 @@ async def delete_dataset(
 async def list_datasets():
     """List all datasets in the repository."""
 
-    from template.services.dataset import DatasetService
-
-    service: DatasetService = await get_service_dataset()
+    service = await get_service_dataset()
     datasets = await service.list()
 
     if not datasets:
