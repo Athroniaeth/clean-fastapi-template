@@ -17,7 +17,7 @@ cli_ml = AsyncTyper(
 
 async def get_service_ml():  # noqa
     """Get the tokenizer service."""
-    from template.infrastructure.database import get_s3_client
+    from template.infrastructure.s3 import get_s3_client
 
     from template.repositories.ml import MLRepository
     from template.services.ml import MLService
@@ -142,8 +142,8 @@ async def generate_text(
 
 
 @cli_ml.command(name="prob")
-def show_probabilities(
-    model: str = typer.Argument("model", help="Model identifier to use"),
+async def show_probabilities(
+    identifier: str = typer.Argument("model", help="Model identifier to use"),
     start_text: str = typer.Option("", "--start-text", help="Check probabilities from this text"),
     device: str = typer.Option("cuda", "--device", help="Device to use for generation"),
     temperature: float = typer.Option(1.0, "--temperature", help="Temperature for sampling"),
@@ -154,21 +154,20 @@ def show_probabilities(
     from torch.nn import functional as F
     from rich import print as rprint
 
-    from template.model import BengioMLP
-    from template.repositories.models import repository
+    service_ml = await get_service_ml()
 
-    model_obj: BengioMLP = repository.get(identifier=model).to(device)
-    tokenizer = model_obj.tokenizer
-    model_obj.eval()
+    model = await service_ml.get(identifier=identifier)
+    tokenizer = model.tokenizer
+    model.eval()
 
     tokens = tokenizer.encode(start_text)
     ids = [tokenizer.sos_index] + tokens
     x = torch.tensor([ids], device=device)
-    if x.shape[1] > model_obj.n_context:
-        x = x[:, -model_obj.n_context :]
+    if x.shape[1] > model.n_context:
+        x = x[:, -model.n_context :]
 
     with torch.no_grad():
-        logits = model_obj(x)[:, -1, :] / max(temperature, 1e-6)
+        logits = model(x)[:, -1, :] / max(temperature, 1e-6)
         probs = F.softmax(logits, dim=-1).squeeze(0)
         top_probs, top_idx = torch.sort(probs, descending=True)
 

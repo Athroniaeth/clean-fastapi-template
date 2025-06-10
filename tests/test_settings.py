@@ -10,7 +10,7 @@ Example:
 """
 
 import pytest
-from pydantic import Field, ConfigDict
+from pydantic import Field, ConfigDict, HttpUrl
 from sqlalchemy import URL
 
 from template.settings import (
@@ -39,6 +39,12 @@ class CustomSettings(Settings):
         ),
         alias="DATABASE_URL",
     )
+
+    s3_bucket: str = Field(default="test-bucket", alias="S3_BUCKET")
+    s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
+    s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
+    s3_access_key_id: str = Field(default="None", alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(default="None", alias="S3_SECRET_ACCESS_KEY")
 
     model_config = ConfigDict(env_file=None)
 

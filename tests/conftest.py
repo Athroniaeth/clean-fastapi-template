@@ -6,7 +6,7 @@ from httpx import AsyncClient, ASGITransport
 from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
-from template.infrastructure.database import Base
+from template.infrastructure.database import Base, get_db
 from template.app import create_app
 
 
@@ -24,8 +24,14 @@ async def client() -> AsyncIterator[AsyncClient]:
     Notes:
         See: https://github.com/Kludex/fastapi-tips?tab=readme-ov-file#5-use-httpxs-asyncclient-instead-of-testclient
     """
+    async_session = get_db("sqlite+aiosqlite:///:memory:")
     # Delete lifespan (faster tests after finish running)
-    app = create_app()
+    app = create_app(
+        title="Test App",
+        version="0.1.0",
+        description="Test Description",
+        session=async_session,
+    )
 
     async with LifespanManager(app) as manager:
         transport = ASGITransport(app=manager.app)

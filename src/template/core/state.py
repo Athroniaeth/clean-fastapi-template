@@ -1,15 +1,12 @@
 import tomllib
-from contextlib import asynccontextmanager
 from dataclasses import dataclass, fields
-from typing import Mapping, AsyncGenerator, Any  # type: ignore[import]
+from typing import Mapping  # type: ignore[import]
 
 from fastapi import FastAPI as _FastAPI
 from fastapi import Request as _Request
-from httpx import AsyncClient
-from loguru import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from template import PROJECT_PATH
-from template.infrastructure.database import create_database
 
 
 @dataclass
@@ -25,7 +22,6 @@ class State(Mapping):
         We integrate `Mapping` to allow this class to be used by FastAPI
 
     Attributes:
-        client (AsyncClient): The HTTP client used for making requests.
         title (str): The title of the application.
         version (str): The version of the application.
         description (str): The description of the application.
@@ -34,7 +30,7 @@ class State(Mapping):
     title: str
     version: str
     description: str
-    client: AsyncClient
+    session: AsyncSession
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -59,26 +55,22 @@ class Request(_Request):
     state: State
 
 
-@asynccontextmanager
+"""@asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[State, Any]:
-    """Basic lifespan context manager for FastAPI."""
-
-    # Create database connection
-    await create_database()
+    ""Basic lifespan context manager for FastAPI.""
 
     # Note: We log with TRACE for not spam with pytest
     logger.debug("Starting FastAPI application lifecycle")
 
     async with AsyncClient() as client:
         state: State = State(
-            client=client,
             title=app.title,
             version=app.version,
             description=app.description,
         )
         yield state
 
-    logger.debug("Shutting down FastAPI application lifecycle")
+    logger.debug("Shutting down FastAPI application lifecycle")"""
 
 
 def get_version() -> str:

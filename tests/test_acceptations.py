@@ -7,7 +7,7 @@ async def test_root(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {
-        "name": "FastAPI Application",
+        "name": "Test App",
         "version": "0.1.0",
         "status": "ok",
         "docs": "/docs",

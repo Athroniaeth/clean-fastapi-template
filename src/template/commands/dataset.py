@@ -16,7 +16,7 @@ async def get_service_dataset():  # noqa
     """Get the dataset service."""
     from template.services.dataset import DatasetService
     from template.repositories.dataset import DatasetRepository
-    from template.infrastructure.database import get_s3_client
+    from template.infrastructure.s3 import get_s3_client
 
     from template.settings import get_settings
 

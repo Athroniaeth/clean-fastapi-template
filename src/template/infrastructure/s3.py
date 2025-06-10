@@ -1,13 +1,16 @@
-import logging
 import pickle
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, List, Type
+from contextlib import asynccontextmanager
+from typing import Generic, TypeVar, Optional, List, Type, AsyncIterator
 
+import aioboto3
 from aiobotocore.client import AioBaseClient
+from botocore.client import BaseClient
 from botocore.exceptions import ClientError
+from loguru import logger
 
+from template.settings import get_settings
 
-logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
@@ -126,3 +129,35 @@ class PickleRepository(AbstractS3Repository, Generic[T]):
     def deserialize(self, payload: bytes) -> T:
         """Transform raw bytes downloaded from S3 back into an object of type T."""
         return pickle.loads(payload)
+
+
+@asynccontextmanager
+async def get_s3_client() -> AsyncIterator[BaseClient]:
+    """Get the S3 client."""
+    settings = get_settings()
+    s3_session = aioboto3.Session()
+
+    async with s3_session.client(
+        "s3",
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key_id,
+        aws_secret_access_key=settings.s3_secret_access_key,
+        endpoint_url=f"{settings.s3_endpoint_url}",
+    ) as s3_client:
+        # Create bucket if it does not exist
+        logger.debug(f"Checking if bucket {settings.s3_bucket} exists...")
+        try:
+            await s3_client.head_bucket(Bucket=settings.s3_bucket)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                logger.debug(f"{settings.s3_bucket} does not exist, creating...")
+                await s3_client.create_bucket(
+                    Bucket=settings.s3_bucket,
+                    CreateBucketConfiguration={"LocationConstraint": settings.s3_region},
+                )
+            else:
+                raise
+
+        logger.debug(f"S3 client created with endpoint: {settings.s3_endpoint_url}")
+        yield s3_client
+        logger.debug("S3 client closed.")

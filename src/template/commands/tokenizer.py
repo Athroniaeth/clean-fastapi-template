@@ -14,7 +14,7 @@ cli_tokenizer = AsyncTyper(
 async def get_service_tokenizer():  # noqa
     """Get the tokenizer service."""
     from template.repositories.tokenizer import TokenizerRepository
-    from template.infrastructure.database import get_s3_client
+    from template.infrastructure.s3 import get_s3_client
 
     from template.services.tokenizer import TokenizerService
     from template.settings import get_settings

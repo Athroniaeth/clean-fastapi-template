@@ -82,11 +82,11 @@ class DevelopmentSettings(Settings):
         alias="DATABASE_URL",
     )
 
-    s3_bucket: str = Field("test-bucket", alias="S3_BUCKET")
+    s3_bucket: str = Field(default="test-bucket", alias="S3_BUCKET")
     s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
     s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
-    s3_access_key_id: str = Field("None", alias="S3_ACCESS_KEY_ID")
-    s3_secret_access_key: str = Field("None", alias="S3_SECRET_ACCESS_KEY")
+    s3_access_key_id: str = Field(default="None", alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(default="None", alias="S3_SECRET_ACCESS_KEY")
 
 
 class ProductionSettings(Settings):
@@ -101,6 +101,12 @@ class ProductionSettings(Settings):
         ),
         alias="DATABASE_URL",
     )
+
+    s3_bucket: str = Field(default="test-bucket", alias="S3_BUCKET")
+    s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
+    s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
+    s3_access_key_id: str = Field(default="None", alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(default="None", alias="S3_SECRET_ACCESS_KEY")
 
 
 def get_settings() -> Settings:
