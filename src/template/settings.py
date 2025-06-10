@@ -77,7 +77,7 @@ class DevelopmentSettings(Settings):
     postgres_url: URL = Field(
         default=URL.create(
             drivername="sqlite+aiosqlite",
-            database="./data/dev.db",
+            database="./data/db.sqlite",
         ),
         alias="DATABASE_URL",
     )

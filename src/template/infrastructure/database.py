@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import AsyncIterator, Type
 
@@ -32,6 +33,7 @@ async def create_db(database_url: str, base: Type[DeclarativeBase] = Base) -> se
     return async_session
 
 
+@asynccontextmanager
 async def get_db(database_url: str, base: Type[DeclarativeBase] = Base) -> AsyncIterator[AsyncSession]:
     """Get the database session."""
     async_session = await create_db(database_url, base)

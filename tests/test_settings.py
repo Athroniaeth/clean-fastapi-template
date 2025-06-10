@@ -77,7 +77,7 @@ def test_db_settings_development(monkeypatch):
     settings = get_settings()
 
     assert isinstance(settings, DevelopmentSettings)
-    expected = "sqlite+aiosqlite:///./data/dev.db"
+    expected = "sqlite+aiosqlite:///./data/db.sqlite"
     assert settings.database_url == expected
 
 

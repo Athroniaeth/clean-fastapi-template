@@ -10,7 +10,7 @@ from template.services.api_keys import api_key_header, APIKeyService
 
 async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:
     """Get the database session."""
-    async_session = request.app.state.session
+    async_session = request.state.session
 
     async with async_session() as session:
         try:
