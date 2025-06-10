@@ -3,6 +3,7 @@ from typing import List
 import polars
 import torch
 from torch import nn
+from torch.optim.lr_scheduler import LinearLR
 from torchmetrics.classification import MulticlassAccuracy
 
 from template.domain.dataset import NLPDataset
@@ -10,7 +11,7 @@ from template.domain.ml import NLPModel, BengioMLP
 from template.domain.tokenizer import Tokenizer
 from template.repositories.ml import MLRepository
 from template.services.dataset import DEFAULT_COLUMN_NAME
-from template.utils import train_model, split_dataset
+from template.core.ml import split_dataset, train_model
 
 
 class MLService:
@@ -39,7 +40,7 @@ class MLService:
     async def create(
         self,
         identifier: str,
-        dataset: polars.DataFrame,
+        dataframe: polars.DataFrame,
         tokenizer: Tokenizer,
         device: str = "cuda",
         batch_size: int = 256,
@@ -59,7 +60,7 @@ class MLService:
 
         Args:
             identifier (str): The identifier for the dataset (file name without extension).
-            dataset (polars.DataFrame): The raw data as a polars DataFrame.
+            dataframe (polars.DataFrame): The raw data as a polars DataFrame.
             tokenizer (Tokenizer): The tokenizer to use for the dataset.
             device (str): The device to use for training (default: "cuda").
             batch_size (int): The batch size for training (default: 256).
@@ -81,7 +82,7 @@ class MLService:
         if await self.repo.exists(identifier):
             raise FileExistsError(f"Tokenizer '{identifier}' already exists.")
 
-        sentences = dataset[DEFAULT_COLUMN_NAME].to_list()
+        sentences = dataframe[DEFAULT_COLUMN_NAME].to_list()
 
         dataset = NLPDataset(
             sentences=sentences,
@@ -118,6 +119,7 @@ class MLService:
             start_factor=scheduler_start_factor,
             end_factor=scheduler_end_factor,
             total_iters=scheduler_total_iters,
+            type_scheduler=LinearLR,
         )
 
         await self.repo.save(identifier, model)

@@ -27,8 +27,8 @@ async def get_service_ml():  # noqa
 
     async with create_s3(
         region_name=settings.s3_region,
-        aws_access_key_id=settings.s3_access_key,
-        aws_secret_access_key=settings.s3_secret_key,
+        aws_access_key_id=settings.s3_access_key_id,
+        aws_secret_access_key=settings.s3_secret_access_key,
         endpoint_url=settings.s3_endpoint_url,
         bucket=settings.s3_bucket,
     ) as s3_client:

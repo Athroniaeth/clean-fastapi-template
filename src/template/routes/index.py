@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form
 
-from template.core.state import Request
+from template.core.constants import Request
 from template.routes.api_keys import keys_router
 from template.schemas.users import UserReadResponse, UserCreateSchema
 from template.services.auth import get_current_user, get_auth_service, AuthService

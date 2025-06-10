@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from starlette.responses import JSONResponse
 
-from template.core.state import Request
+from template.core.constants import Request
 
 
 class APIException(HTTPException):

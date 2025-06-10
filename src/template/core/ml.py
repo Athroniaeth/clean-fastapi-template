@@ -1,20 +1,18 @@
 import contextlib
-
-from loguru import logger
-from torch.utils.data import SubsetRandomSampler, DataLoader, Dataset
 import statistics
 from typing import Type
 
+import numpy as np
 import torch
+from loguru import logger
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LinearLR
+from torch.utils.data import Dataset, SubsetRandomSampler, DataLoader
 from torchmetrics import Metric
 from torchmetrics.classification import MulticlassAccuracy
 from tqdm import tqdm
-
-import numpy as np
 
 
 def split_dataset(
@@ -43,7 +41,7 @@ def split_dataset(
     print(f"Splitting dataset, {ratio=}, {ratio_tests=}, {ratio_validation=}")
 
     # Prépare une liste d'indices du dataset
-    dataset_size = len(dataset)  # noqa
+    dataset_size = len(dataset)  # ty: ignore[invalid-argument-type]
     indices = [i for i in range(dataset_size)]
 
     # Calcule les slices pour chaque partie du dataset
@@ -82,12 +80,12 @@ def train_model(
     train_loader: DataLoader,
     test_loader: DataLoader,
     validation_loader: DataLoader,
+    optimizer: Optimizer,
+    metric: MulticlassAccuracy,
+    criterion: _Loss,
+    type_scheduler: Type[LinearLR],
     num_epochs: int = 20,
     device: str = "cuda",
-    optimizer: Optimizer = torch.optim.Adam,
-    metric: MulticlassAccuracy = MulticlassAccuracy,
-    criterion: _Loss = nn.CrossEntropyLoss,
-    scheduler: Type[LinearLR] = LinearLR,
     start_factor: float = 1.0,
     end_factor: float = 1e-4,
     total_iters: int = 0,
@@ -97,7 +95,7 @@ def train_model(
     logger.info(f"Device: {model.device}")
 
     # Initialize optimizer and scheduler
-    scheduler = scheduler(
+    scheduler = type_scheduler(
         optimizer=optimizer,
         start_factor=start_factor,
         end_factor=end_factor,
@@ -125,7 +123,7 @@ def train_model(
                 y_flat = y.view(-1)  # [B*L]
 
                 # Calculate loss
-                loss = criterion(predictions_flat, y_flat)
+                loss = criterion(predictions_flat, y_flat)  # ty: ignore[call-non-callable]
 
                 # Backward pass
                 optimizer.zero_grad()

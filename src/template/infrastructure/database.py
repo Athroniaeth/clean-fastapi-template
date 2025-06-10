@@ -10,7 +10,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 @lru_cache(maxsize=3)
-async def create_db(database_url: str, base: Type[DeclarativeBase] = Base) -> sessionmaker[AsyncSession]:
+async def create_db(database_url: str, base: Type[DeclarativeBase] = Base) -> sessionmaker:
     # Create an async engine
     engine = create_async_engine(
         url=database_url,

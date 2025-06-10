@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 from typing import Tuple
 
@@ -25,3 +26,12 @@ def cli():
 PROJECT_PATH = Path(__file__).parents[2]
 DATA_PATH = PROJECT_PATH / "data"
 RAW_DATA_PATH = DATA_PATH / "raw_data"
+
+
+def get_version() -> str:
+    """Get the version of the application."""
+    # Get the version of the pyproject.toml file
+    pyproject_path = PROJECT_PATH / "pyproject.toml"
+    content = pyproject_path.read_text(encoding="utf-8")
+    dict_content = tomllib.loads(content)
+    return dict_content["project"]["version"]

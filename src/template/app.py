@@ -8,7 +8,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 from loguru import logger
 
-from template.core.state import FastAPI, get_version, State
+from template.core.constants import State, FastAPI, Lifespan
+from template import get_version
 from template.core.exceptions import APIException
 from template.infrastructure.database import create_db
 from template.routes.index import index_router, api_router
@@ -40,7 +41,7 @@ def create_app(
     title: str,
     version: str,
     description: str,
-    lifespan: asynccontextmanager,
+    lifespan: Lifespan,
 ) -> FastAPI:
     """Create a new instance of the application."""
     app = FastAPI(
