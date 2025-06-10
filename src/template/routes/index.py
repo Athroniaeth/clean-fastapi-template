@@ -14,8 +14,8 @@ api_router.include_router(keys_router)
 async def root(request: Request):
     """Root endpoint of the application."""
     return {
-        "name": request.app.state.title,
-        "version": request.app.state.version,
+        "name": request.state.title,
+        "version": request.state.version,
         "status": "ok",
         "docs": "/docs",
         "health": "/health",

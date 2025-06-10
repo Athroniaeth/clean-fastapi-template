@@ -67,7 +67,7 @@ def _run(
         reload=reload,
         workers=workers,
         log_level="warning",  # Disable uvicorn logs
-        factory=True,
+        factory=True,  # Use factory mode to create the app
     )
 
 
@@ -88,7 +88,7 @@ def callback(level: LoggingLevel = Level.INFO):
 
 @cli.command()
 def dev(
-    source: str = "template.app:create_app",
+    source: str = "template.app:factory_app",
     host: str = typer.Option("localhost", envvar="HOST"),
     port: int = typer.Option(8000, envvar="PORT"),
     workers: int = typer.Option(1, envvar="WORKERS"),
