@@ -1,20 +1,18 @@
 from __future__ import annotations
 
-from aiobotocore.client import AioBaseClient
 
 from template.domain.ml import NLPModel
 from template.domain.tokenizer import Tokenizer
-from template.infrastructure.s3 import PickleRepository
+from template.infrastructure.s3.adapter import PickleRepository
+from template.infrastructure.s3.base import S3Infrastructure
 
 
 class MLRepository(PickleRepository[NLPModel]):
     """Repository for persisting machine learning models as pickled files."""
 
-    def __init__(self, s3_client: AioBaseClient, bucket: str) -> None:
+    def __init__(self, s3_client: S3Infrastructure) -> None:
         super().__init__(
             s3_client,
-            bucket,
             type_object=Tokenizer,
-            prefix="ml_models/",
-            extension="pickle",
+            prefix="models/",
         )

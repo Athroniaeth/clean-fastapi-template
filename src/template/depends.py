@@ -1,9 +1,10 @@
 from typing import Annotated, Optional, AsyncIterator
 
+from aiobotocore.client import AioBaseClient
 from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
 
+from template.core.constants import Request
 from template.repositories.api_keys import APIKeyRepository
 from template.services.api_keys import api_key_header, APIKeyService
 
@@ -20,6 +21,18 @@ async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:
             raise
         finally:
             await session.close()
+
+
+async def inject_s3(request: Request) -> AsyncIterator[AioBaseClient]:
+    """Get the S3 session."""
+    s3_session = request.state.s3_client
+
+    try:
+        yield s3_session
+    except Exception:
+        raise
+    finally:
+        pass  # No explicit close needed for boto3 sessions
 
 
 async def verify_api_key(

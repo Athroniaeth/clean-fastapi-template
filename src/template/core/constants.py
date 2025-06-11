@@ -5,8 +5,11 @@ from typing import Mapping
 from fastapi import FastAPI as _FastAPI
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request as _Request
-
 from typing import Callable, AsyncContextManager
+
+from template.infrastructure.s3.base import S3Infrastructure
+
+type Lifespan = Callable[[], AsyncContextManager[None]]
 
 
 class Level(StrEnum):
@@ -51,6 +54,7 @@ class State(Mapping):
     version: str
     description: str
     session: sessionmaker
+    s3_client: S3Infrastructure
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -66,6 +70,10 @@ class State(Mapping):
 class FastAPI(_FastAPI):
     """Custom FastAPI class to include the HTTP client in the state."""
 
+    title: str
+    version: str
+    description: str
+    lifespan: Lifespan
     state: State
 
 
@@ -73,6 +81,3 @@ class Request(_Request):
     """Custom request class to include the HTTP client in the state."""
 
     state: State
-
-
-type Lifespan = Callable[[], AsyncContextManager[None]]

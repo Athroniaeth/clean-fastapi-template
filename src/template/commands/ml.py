@@ -6,6 +6,7 @@ from tqdm import tqdm
 from template.commands.dataset import get_service_dataset
 from template.commands.tokenizer import get_service_tokenizer
 from template.core.cli import AsyncTyper
+from template.infrastructure.s3.base import S3Infrastructure
 
 cli_ml = AsyncTyper(
     name="ml",
@@ -17,7 +18,6 @@ cli_ml = AsyncTyper(
 
 async def get_service_ml():  # noqa
     """Get the tokenizer service."""
-    from template.infrastructure.s3 import create_s3
 
     from template.repositories.ml import MLRepository
     from template.services.ml import MLService
@@ -25,19 +25,9 @@ async def get_service_ml():  # noqa
 
     settings = get_settings()
 
-    async with create_s3(
-        region_name=settings.s3_region,
-        aws_access_key_id=settings.s3_access_key_id,
-        aws_secret_access_key=settings.s3_secret_access_key,
-        endpoint_url=settings.s3_endpoint_url,
-        bucket=settings.s3_bucket,
-    ) as s3_client:
-        repo = MLRepository(
-            s3_client=s3_client,
-            bucket=settings.s3_bucket,
-        )
-
-        return MLService(repo=repo)
+    s3_client = S3Infrastructure.from_settings(settings)
+    repo = MLRepository(s3_client=s3_client)
+    return MLService(repo=repo)
 
 
 @cli_ml.command(name="create")

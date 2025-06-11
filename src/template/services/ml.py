@@ -30,7 +30,7 @@ class MLService:
         Returns:
             Path: The path of the dataset.
         """
-        ml = await self.repo.load(identifier)
+        ml = await self.repo.get(identifier)
 
         if ml is None:
             raise FileNotFoundError(f"ML Model '{identifier}' does not exist.")
@@ -122,7 +122,7 @@ class MLService:
             type_scheduler=LinearLR,
         )
 
-        await self.repo.save(identifier, model)
+        await self.repo.create(identifier, model)
 
         # Always move back to CPU before returning (safer for pickling)
         return model.cpu()

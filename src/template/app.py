@@ -11,26 +11,32 @@ from loguru import logger
 from template.core.constants import State, FastAPI, Lifespan
 from template import get_version
 from template.core.exceptions import APIException
-from template.infrastructure.database import create_db
+from template.infrastructure.sql.base import create_db
+from template.infrastructure.s3.base import S3Infrastructure
 from template.routes.index import index_router, api_router
-from template.settings import get_settings
+from template.settings import get_settings, Settings
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI, database_url: str) -> AsyncIterator[State]:
+async def lifespan(app: FastAPI, settings: Settings) -> AsyncIterator[State]:
     """Basic lifespan context manager for FastAPI."""
 
     # Note: We log with TRACE for not spam with pytest
     logger.debug("Starting FastAPI application lifecycle")
 
     # Create an async engine
-    async_session = await create_db(database_url)
+    async_session = await create_db(settings.database_url)
+
+    s3_client = S3Infrastructure.from_settings(settings)
+    # Todo: Hard to test, need found solution
+    # await s3_client.ensure_bucket_exists()
 
     state: State = State(
         title=app.title,
         version=app.version,
         description=app.description,
         session=async_session,
+        s3_client=s3_client,
     )
     yield state
 
@@ -89,6 +95,6 @@ def factory_app() -> FastAPI:
         title="Template FastAPI App",
         version=get_version(),
         description="A template FastAPI application with async capabilities.",
-        lifespan=partial(lifespan, database_url=settings.database_url),
+        lifespan=partial(lifespan, settings=settings),
     )
     return app

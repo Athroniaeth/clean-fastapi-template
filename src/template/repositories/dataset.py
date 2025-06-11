@@ -1,30 +1,21 @@
 import io
 
 import polars as pl
-from aiobotocore.client import AioBaseClient
 
-from template.infrastructure.s3 import AbstractS3Repository
+from template.infrastructure.s3.adapter import AbstractS3Repository
+from template.infrastructure.s3.base import S3Infrastructure
 
 
 class DatasetRepository(AbstractS3Repository[pl.DataFrame]):
     """Specialised repository persisting Polars DataFrame objects as Parquet."""
 
-    def __init__(
-        self,
-        s3_client: AioBaseClient,
-        bucket: str,
-        *,
-        prefix: str = "datasets/",
-        raw_prefix: str = "raw/",
-    ) -> None:
+    def __init__(self, s3_client: S3Infrastructure) -> None:
         super().__init__(
             s3_client,
             type_object=pl.DataFrame,
-            bucket=bucket,
-            prefix=prefix,
-            extension="parquet",
+            prefix="datasets/",
+            extension=".parquet",
         )
-        self.raw_prefix = raw_prefix.rstrip("/") + "/"
 
     def serialize(self, obj: pl.DataFrame) -> bytes:
         buf = io.BytesIO()
