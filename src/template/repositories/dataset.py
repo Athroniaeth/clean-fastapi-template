@@ -2,16 +2,16 @@ import io
 
 import polars as pl
 
-from template.infrastructure.s3.adapter import AbstractS3Repository
-from template.infrastructure.s3.base import S3Infrastructure
+from template.infrastructure.storage.adapter import AbstractFileRepository
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 
-class DatasetRepository(AbstractS3Repository[pl.DataFrame]):
+class DatasetRepository(AbstractFileRepository[pl.DataFrame]):
     """Specialised repository persisting Polars DataFrame objects as Parquet."""
 
-    def __init__(self, s3_client: S3Infrastructure) -> None:
+    def __init__(self, infra_storage: AbstractStorageInfra) -> None:
         super().__init__(
-            s3_client,
+            infra_storage,
             type_object=pl.DataFrame,
             prefix="datasets/",
             extension=".parquet",

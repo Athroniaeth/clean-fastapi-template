@@ -6,7 +6,6 @@ from tqdm import tqdm
 from template.commands.dataset import get_service_dataset
 from template.commands.tokenizer import get_service_tokenizer
 from template.core.cli import AsyncTyper
-from template.infrastructure.s3.base import S3Infrastructure
 
 cli_ml = AsyncTyper(
     name="ml",
@@ -23,17 +22,19 @@ async def get_service_ml():  # noqa
     from template.services.ml import MLService
     from template.settings import get_settings
 
+    from template.settings import get_storage_infra
+
     settings = get_settings()
 
-    s3_client = S3Infrastructure.from_settings(settings)
-    repo = MLRepository(s3_client=s3_client)
+    infra_client = get_storage_infra(settings)
+    repo = MLRepository(infra_client=infra_client)
     return MLService(repo=repo)
 
 
 @cli_ml.command(name="create")
 async def create_model(
     model_id: str = typer.Argument("model", help="Model identifier to create"),
-    dataset: str = typer.Option("villes", "--dataset", help="Dataset identifier to use to create the model"),
+    dataframe: str = typer.Option("villes", "--dataset", help="Dataset identifier to use to create the model"),
     tokenizer: str = typer.Option("tokenizer", "--tokenizer", help="Tokenizer identifier to use to create the model"),
     device: str = "cuda",
     batch_size: int = 256,
@@ -53,7 +54,7 @@ async def create_model(
     service_dataset = await get_service_dataset()
     service_tokenizer = await get_service_tokenizer()
 
-    dataset = await service_dataset.get(identifier=dataset)
+    dataframe = await service_dataset.get(identifier=dataframe)
     tokenizer = await service_tokenizer.get(identifier=tokenizer)
 
     typer.echo("Training… (Ctrl-C to abort)")
@@ -73,7 +74,7 @@ async def create_model(
     }
     model = await service_ml.create(
         identifier=model_id,
-        dataset=dataset,
+        dataframe=dataframe,
         tokenizer=tokenizer,
         **train_config,
     )

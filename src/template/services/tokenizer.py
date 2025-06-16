@@ -23,7 +23,7 @@ class TokenizerService:
         Returns:
             Path: The path of the dataset.
         """
-        df = await self.repo.load(identifier)
+        df = await self.repo.get(identifier)
 
         if df is None:
             raise FileNotFoundError(f"Tokenizer '{identifier}' does not exist.")
@@ -53,7 +53,7 @@ class TokenizerService:
 
         sentences = dataset[DEFAULT_COLUMN_NAME].to_list()
         tokenizer = class_.from_sentences(sentences=sentences)
-        await self.repo.save(identifier, tokenizer)
+        await self.repo.create(identifier, tokenizer)
         return tokenizer
 
     async def delete(self, identifier: str) -> None:

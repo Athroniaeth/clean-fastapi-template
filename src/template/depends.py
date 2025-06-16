@@ -11,7 +11,7 @@ from template.services.api_keys import api_key_header, APIKeyService
 
 async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:
     """Get the database session."""
-    async_session = request.state.session
+    async_session = request.state.async_session
 
     async with async_session() as session:
         try:
@@ -25,7 +25,7 @@ async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:
 
 async def inject_s3(request: Request) -> AsyncIterator[AioBaseClient]:
     """Get the S3 session."""
-    s3_session = request.state.s3_client
+    s3_session = request.state.infra_storage
 
     try:
         yield s3_session

@@ -3,16 +3,16 @@ from __future__ import annotations
 
 from template.domain.ml import NLPModel
 from template.domain.tokenizer import Tokenizer
-from template.infrastructure.s3.adapter import PickleRepository
-from template.infrastructure.s3.base import S3Infrastructure
+from template.infrastructure.storage.adapter import PickleRepository
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 
 class MLRepository(PickleRepository[NLPModel]):
     """Repository for persisting machine learning models as pickled files."""
 
-    def __init__(self, s3_client: S3Infrastructure) -> None:
+    def __init__(self, infra_client: AbstractStorageInfra) -> None:
         super().__init__(
-            s3_client,
+            infra_client,
             type_object=Tokenizer,
             prefix="models/",
         )

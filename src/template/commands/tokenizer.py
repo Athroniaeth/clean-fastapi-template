@@ -2,7 +2,6 @@ import typer
 
 from template.commands.dataset import get_service_dataset
 from template.core.cli import AsyncTyper
-from template.infrastructure.s3.base import S3Infrastructure
 
 cli_tokenizer = AsyncTyper(
     name="tokenizer",
@@ -16,13 +15,14 @@ async def get_service_tokenizer():  # noqa
     """Get the tokenizer service."""
     from template.repositories.tokenizer import TokenizerRepository
 
+    from template.settings import get_storage_infra
     from template.services.tokenizer import TokenizerService
     from template.settings import get_settings
 
     settings = get_settings()
 
-    s3_client = S3Infrastructure.from_settings(settings)
-    repo = TokenizerRepository(s3_client=s3_client)
+    infra_storage = get_storage_infra(settings)
+    repo = TokenizerRepository(infra_storage)
     return TokenizerService(repo=repo)
 
 
@@ -31,9 +31,7 @@ async def get_tokenizer(
     identifier: str = typer.Argument(..., help="Tokenizer identifier to get"),
 ):
     """Get a tokenizer by its identifier."""
-    from template.services.tokenizer import TokenizerService
-
-    service: TokenizerService = await get_service_tokenizer()
+    service = await get_service_tokenizer()
     tokenizer = await service.get(identifier)
     typer.echo(f"Tokenizer '{identifier}':")
     typer.echo(tokenizer)

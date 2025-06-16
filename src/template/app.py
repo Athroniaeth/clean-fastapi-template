@@ -12,9 +12,8 @@ from template.core.constants import State, FastAPI, Lifespan
 from template import get_version
 from template.core.exceptions import APIException
 from template.infrastructure.sql.base import create_db
-from template.infrastructure.s3.base import S3Infrastructure
 from template.routes.index import index_router, api_router
-from template.settings import get_settings, Settings
+from template.settings import get_settings, Settings, get_storage_infra
 
 
 @asynccontextmanager
@@ -27,7 +26,8 @@ async def lifespan(app: FastAPI, settings: Settings) -> AsyncIterator[State]:
     # Create an async engine
     async_session = await create_db(settings.database_url)
 
-    s3_client = S3Infrastructure.from_settings(settings)
+    # Initialize the storage (file) infrastructure
+    infra_storage = get_storage_infra(settings)
     # Todo: Hard to test, need found solution
     # await s3_client.ensure_bucket_exists()
 
@@ -35,8 +35,8 @@ async def lifespan(app: FastAPI, settings: Settings) -> AsyncIterator[State]:
         title=app.title,
         version=app.version,
         description=app.description,
-        session=async_session,
-        s3_client=s3_client,
+        async_session=async_session,
+        infra_storage=infra_storage,
     )
     yield state
 

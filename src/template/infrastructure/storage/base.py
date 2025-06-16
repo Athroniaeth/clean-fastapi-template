@@ -1,15 +1,18 @@
+import asyncio
+from abc import abstractmethod, ABC
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from io import BytesIO
-from typing import AsyncIterator, Optional, Union, cast, List
+from pathlib import Path
+from typing import AsyncIterator, Optional, Union, List
 
 import aioboto3
+import aiofiles
 import httpx
 from botocore.exceptions import ClientError
 from types_aiobotocore_s3.client import S3Client
 from types_aiobotocore_s3.literals import BucketLocationConstraintType
 
-from template.settings import Settings
 
 DEFAULT_SERVICE_NAME = "s3"
 
@@ -25,8 +28,102 @@ async def is_endpoint_available(endpoint_url: str, timeout: float = 1.0) -> bool
         )
 
 
+class AbstractStorageInfra(ABC):
+    """Abstract interface for file storage infrastructure."""
+
+    @abstractmethod
+    async def ensure_storage_exists(self) -> None:
+        """
+        Ensure the storage backend is initialized and available.
+        """
+        pass
+
+    @abstractmethod
+    async def exists_bytes(self, key: str) -> bool:
+        """
+        Check if an object exists.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            True if the object exists, False otherwise.
+        """
+        pass
+
+    @abstractmethod
+    async def get_bytes(self, key: str) -> Optional[bytes]:
+        """
+        Retrieve the object content as bytes.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            Content in bytes if found, else None.
+        """
+        pass
+
+    @abstractmethod
+    async def create_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        """
+        Create a new object.
+
+        Args:
+            key: Object key.
+            data: Object content.
+
+        Returns:
+            True if the object was created, False if it already exists.
+        """
+        pass
+
+    @abstractmethod
+    async def update_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        """
+        Update an existing object.
+
+        Args:
+            key: Object key.
+            data: New object content.
+
+        Returns:
+            True if updated, False if the object does not exist.
+        """
+        pass
+
+    @abstractmethod
+    async def delete_bytes(self, key: str) -> bool:
+        """
+        Delete an object.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            True if the object was deleted, False if it does not exist.
+        """
+        pass
+
+    @abstractmethod
+    async def list_all(self, prefix: str = "") -> List[str]:
+        """
+        List all objects with the given prefix.
+
+        Notes:
+            This method return key with the prefix and the extension.
+
+        Args:
+            prefix: Path prefix.
+
+        Returns:
+            List of object keys.
+        """
+        pass
+
+
 @dataclass
-class S3Infrastructure:
+class S3StorageInfra(AbstractStorageInfra):
     """
     Class to handle asynchronous S3 operations using aioboto3.
 
@@ -48,20 +145,7 @@ class S3Infrastructure:
 
     session: aioboto3.Session = field(default_factory=aioboto3.Session)
 
-    @classmethod
-    def from_settings(cls, settings: Settings):
-        """Create an instance from application settings."""
-        s3_region = cast(BucketLocationConstraintType, settings.s3_region)
-
-        return cls(
-            bucket_name=settings.s3_bucket,
-            endpoint_url=f"{settings.s3_endpoint_url}",
-            aws_access_key_id=settings.s3_access_key_id,
-            aws_secret_access_key=settings.s3_secret_access_key,
-            region_name=s3_region,
-        )
-
-    async def ensure_bucket_exists(self) -> None:
+    async def ensure_storage_exists(self) -> None:
         """Ensure the S3 bucket exists, creating it if necessary."""
         # Check if provided endpoint URL is valid and accessible
         await is_endpoint_available(self.endpoint_url)
@@ -241,3 +325,81 @@ class S3Infrastructure:
                 for obj in page.get("Contents", []):
                     keys.append(obj["Key"])
             return keys
+
+
+@dataclass
+class LocalStorageInfra(AbstractStorageInfra):
+    """
+    Local filesystem-based implementation of the file infrastructure.
+
+    All object keys are interpreted as relative paths under the base directory.
+
+    Args:
+        base_path: Base directory for file storage.
+    """
+
+    base_path: Path
+
+    def __init__(self, base_path: Union[str, Path]) -> None:
+        self.base_path = Path(base_path)
+        self.base_path = self.base_path.resolve()
+        self.base_path = self.base_path.absolute()
+
+    def _full_path(self, key: str) -> Path:
+        return self.base_path / key.lstrip("/")
+
+    async def ensure_storage_exists(self) -> None:
+        self.base_path.mkdir(parents=True, exist_ok=True)
+
+    async def exists_bytes(self, key: str) -> bool:
+        return self._full_path(key).exists()
+
+    async def get_bytes(self, key: str) -> Optional[bytes]:
+        path = self._full_path(key)
+        if not path.exists():
+            return None
+        async with aiofiles.open(path, mode="rb") as f:
+            return await f.read()
+
+    async def create_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        path = self._full_path(key)
+        if path.exists():
+            return False
+        path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(path, mode="wb") as f:
+            await f.write(data.getvalue() if isinstance(data, BytesIO) else data)
+        return True
+
+    async def update_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        path = self._full_path(key)
+        if not path.exists():
+            return False
+        async with aiofiles.open(path, mode="wb") as f:
+            await f.write(data.getvalue() if isinstance(data, BytesIO) else data)
+        return True
+
+    async def delete_bytes(self, key: str) -> bool:
+        path = self._full_path(key)
+        if not path.exists():
+            return False
+        await asyncio.to_thread(path.unlink)
+        return True
+
+    async def list_all(self, prefix: str = "") -> List[str]:
+        if not prefix.strip():
+            raise ValueError("Prefix cannot be empty or whitespace.")
+
+        if not prefix.endswith("/"):
+            prefix += "/"
+
+        root = self._full_path(prefix)
+        if not root.exists():
+            return []
+
+        list_ids = [
+            f"{path.relative_to(self.base_path)}"
+            for path in root.rglob("*")
+            if path.is_file() and str(path).startswith(str(root))
+        ]
+
+        return list_ids

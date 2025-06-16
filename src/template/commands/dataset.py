@@ -3,7 +3,6 @@ import typer
 
 from template import RAW_DATA_PATH
 from template.core.cli import AsyncTyper
-from template.infrastructure.s3.base import S3Infrastructure
 
 cli_dataset = AsyncTyper(
     name="dataset",
@@ -17,25 +16,20 @@ async def get_service_dataset():  # noqa
     """Get the dataset service."""
     from template.services.dataset import DatasetService
     from template.repositories.dataset import DatasetRepository
-
     from template.settings import get_settings
+    from template.settings import get_storage_infra
 
     settings = get_settings()
 
-    s3_client = S3Infrastructure.from_settings(settings)
-    repo = DatasetRepository(s3_client=s3_client)
+    infra_storage = get_storage_infra(settings=settings)
+    repo = DatasetRepository(infra_storage=infra_storage)
     return DatasetService(repo=repo)
 
 
 @cli_dataset.command(name="get")
-async def get_dataset(
-    identifier: str = typer.Argument(..., help="Dataset identifier to get"),
-) -> pl.DataFrame:
+async def get_dataset(identifier: str = typer.Argument(..., help="Dataset identifier to get")) -> pl.DataFrame:
     """Get a dataset by its identifier."""
-
-    from template.services.dataset import DatasetService
-
-    service: DatasetService = await get_service_dataset()
+    service = await get_service_dataset()
     dataset = await service.get(identifier)
     typer.echo(f"Dataset '{identifier}':")
     typer.echo(dataset)

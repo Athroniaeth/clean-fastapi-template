@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request as _Request
 from typing import Callable, AsyncContextManager
 
-from template.infrastructure.s3.base import S3Infrastructure
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 type Lifespan = Callable[[], AsyncContextManager[None]]
 
@@ -47,14 +47,14 @@ class State(Mapping):
         title (str): The title of the application.
         version (str): The version of the application.
         description (str): The description of the application.
-        session (sessionmaker[AsyncSession]): The database session for the application.
+        async_session (sessionmaker[AsyncSession]): The database session for the application.
     """
 
     title: str
     version: str
     description: str
-    session: sessionmaker
-    s3_client: S3Infrastructure
+    async_session: sessionmaker
+    infra_storage: AbstractStorageInfra
 
     def __getitem__(self, key):
         return getattr(self, key)

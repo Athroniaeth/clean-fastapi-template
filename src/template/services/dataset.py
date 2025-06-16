@@ -42,7 +42,7 @@ class DatasetService:
         Returns:
             Path: The path of the dataset.
         """
-        df = await self.repo.load(identifier)
+        df = await self.repo.get(identifier)
 
         if df is None:
             raise FileNotFoundError(f"Dataset '{identifier}' does not exist.")
@@ -70,7 +70,7 @@ class DatasetService:
 
         dataset = _preprocess(text)
         dataset = polars.DataFrame({DEFAULT_COLUMN_NAME: dataset})
-        await self.repo.save(identifier, dataset)
+        await self.repo.create(identifier, dataset)
         return dataset
 
     async def delete(self, identifier: str) -> None:
