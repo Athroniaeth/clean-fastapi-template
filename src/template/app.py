@@ -11,7 +11,7 @@ from loguru import logger
 from template.core.constants import State, FastAPI, Lifespan
 from template import get_version
 from template.core.exceptions import APIException
-from template.infrastructure.sql.base import create_db
+from template.infrastructure.database.base import create_sessionmaker
 from template.routes.index import index_router, api_router
 from template.settings import get_settings, Settings, get_storage_infra
 
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI, settings: Settings) -> AsyncIterator[State]:
     logger.debug("Starting FastAPI application lifecycle")
 
     # Create an async engine
-    async_session = await create_db(settings.database_url)
+    async_session = await create_sessionmaker(settings.database_url)
 
     # Initialize the storage (file) infrastructure
     infra_storage = get_storage_infra(settings)

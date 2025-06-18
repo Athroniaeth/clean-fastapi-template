@@ -17,7 +17,7 @@ cli_keys = AsyncTyper(
 async def get_service():
     """Helper to retrieve a service instance with an active DB session."""
 
-    from template.infrastructure.sql.base import get_db
+    from template.infrastructure.database.base import get_db
     from template.repositories.api_keys import APIKeyRepository
     from template.services.api_keys import APIKeyService
 

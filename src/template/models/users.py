@@ -5,7 +5,7 @@ from passlib.hash import bcrypt  # ty: ignore[unresolved-import]
 from sqlalchemy import String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from template.infrastructure.sql.base import Base
+from template.infrastructure.database.base import Base
 
 DEFAULT_ROUNDS = 12
 
