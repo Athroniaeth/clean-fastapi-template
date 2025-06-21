@@ -18,7 +18,7 @@ def _preprocess(dataset: str) -> list[str]:
     dataset = dataset.replace("<SOS>", "\n")  # IDK why, there are some "<SOS>" in the file
     sentences = dataset.split("\n")
     sentences = [sentence for sentence in sentences if len(sentence) > 3]
-    sentences = [sentence.strip().lower() for sentence in sentences]
+    sentences = [sentence.strip() for sentence in sentences]
 
     return sentences
 

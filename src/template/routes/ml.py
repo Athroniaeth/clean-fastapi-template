@@ -7,14 +7,13 @@ from typing import Annotated, Sequence
 from fastapi import (
     APIRouter,
     Depends,
-    status, Path, Body,
+    status,
 )
 from fastapi.params import Query
 
 from template.depends import inject_s3
 from template.infrastructure.storage.base import S3StorageInfra
-from template.models.ml import DocumentedOutputInference, DocumentedMetadataML, DocumentedSelectModel, \
-    DocumentedInputInference
+from template.models.ml import DocumentedOutputInference, DocumentedMetadataML, DocumentedInputInference, MetadataTokenizer
 from template.repositories.ml import MLRepository
 from template.services.ml import MLService
 
@@ -37,7 +36,7 @@ async def route_list_models(service: Annotated[MLService, Depends(_get_service)]
 @models_router.get("/{model_name}", status_code=status.HTTP_200_OK)
 async def route_get_model(
     service: Annotated[MLService, Depends(_get_service)],
-        model_name: str = "communes",
+    model_name: str = "communes",
 ) -> DocumentedMetadataML:
     """Get a specific model by identifier."""
     ml = await service.get(model_name)
@@ -45,6 +44,11 @@ async def route_get_model(
     return DocumentedMetadataML(
         name=ml.__class__.__name__,
         device=str(ml.device),
+        tokenizer=MetadataTokenizer(
+            name=ml.tokenizer.__class__.__name__,
+            vocab=ml.tokenizer.index_to_token,
+            vocab_size=len(ml.tokenizer.vocab),
+        ),
     )
 
 
@@ -52,7 +56,7 @@ async def route_get_model(
 async def route_generate_model(
     inference: Annotated[DocumentedInputInference, Query],
     service: Annotated[MLService, Depends(_get_service)],
-        model_name: str = "communes",
+    model_name: str = "communes",
 ) -> DocumentedOutputInference:
     """Get a specific model by identifier."""
     list_result = []

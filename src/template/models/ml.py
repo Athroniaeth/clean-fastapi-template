@@ -8,9 +8,36 @@ class SelectModel(BaseModel):
         default=...,
         description="Name of the model to select.",
     )
-    
-    
-class MetadataML(BaseModel):
+
+
+class MetadataTokenizer(BaseModel):
+    """Metadata for tokenizers."""
+
+    name: str = Field(
+        default=...,
+        description="Name of the tokenizer.",
+    )
+    version: str = Field(
+        default="1.0.0",
+        description="Version of the tokenizer.",
+    )
+    description: str = Field(
+        default="N/A",
+        description="Description of the tokenizer.",
+    )
+    vocab_size: int = Field(
+        default=0,
+        ge=0,
+        description="Size of the vocabulary used by the tokenizer.",
+    )
+
+    vocab: dict[int, str] = Field(
+        default_factory=dict,
+        description="Vocabulary mapping from token IDs to strings.",
+    )
+
+
+class MetadataModel(BaseModel):
     """Metadata for ML models."""
 
     name: str = Field(
@@ -29,7 +56,11 @@ class MetadataML(BaseModel):
         default="cpu",
         description="Device on which the model is loaded (e.g., 'cpu', 'cuda').",
     )
-    
+    tokenizer: MetadataTokenizer = Field(
+        default=...,
+        description="Metadata of the tokenizer used by the model.",
+    )
+
 
 class InputInference(BaseModel):
     """Input data for inference."""
@@ -68,10 +99,11 @@ class InputInference(BaseModel):
         le=100,
         description="Number of samples to generate.",
     )
-    
+
 
 class OutputInference(BaseModel):
     """Model for inference results from ML models."""
+
     name: str = Field(
         default=...,
         description="Name of the model to use for inference.",
@@ -103,25 +135,30 @@ class DocumentedSelectModel(SelectModel):
     """Model for documented model selection."""
 
     class Config:
-        json_schema_extra = {
-            "example": SelectModel(model_name="communes").model_dump()
-        }
-        
-    
-class DocumentedMetadataML(MetadataML):
+        json_schema_extra = {"example": SelectModel(model_name="communes").model_dump()}
+
+
+class DocumentedMetadataML(MetadataModel):
     """Model for documented ML metadata."""
 
     class Config:
         json_schema_extra = {
-            "example": MetadataML(
+            "example": MetadataModel(
                 name="communes",
                 version="1.0.0",
                 description="A model for generating city names.",
                 device="cpu",
+                tokenizer=MetadataTokenizer(
+                    name="communes_tokenizer",
+                    version="1.0.0",
+                    description="Tokenizer for the communes model.",
+                    vocab_size=26,
+                    vocab={i: f"{chr(i + 65)}" for i in range(26)},
+                ),
             ).model_dump()
         }
-        
-        
+
+
 class DocumentedOutputInference(OutputInference):
     """Model for documented ML inference results."""
 
@@ -136,8 +173,8 @@ class DocumentedOutputInference(OutputInference):
                 uniques=["New York", "Los Angeles"],
             ).model_dump()
         }
-        
-        
+
+
 class DocumentedInputInference(InputInference):
     """Model for documented input inference data."""
 
@@ -149,8 +186,6 @@ class DocumentedInputInference(InputInference):
                 temperature=1.0,
                 top_k=0,
                 top_p=1.0,
-                n=5,
+                n=25,
             ).model_dump()
         }
-        
-        
