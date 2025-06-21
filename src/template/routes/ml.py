@@ -7,11 +7,14 @@ from typing import Annotated, Sequence
 from fastapi import (
     APIRouter,
     Depends,
-    status,
+    status, Path, Body,
 )
+from fastapi.params import Query
 
 from template.depends import inject_s3
 from template.infrastructure.storage.base import S3StorageInfra
+from template.models.ml import DocumentedOutputInference, DocumentedMetadataML, DocumentedSelectModel, \
+    DocumentedInputInference
 from template.repositories.ml import MLRepository
 from template.services.ml import MLService
 
@@ -22,9 +25,7 @@ async def _get_service(s3_client: Annotated[S3StorageInfra, Depends(inject_s3)])
     return MLService(repository)
 
 
-models_router = APIRouter(
-    tags=["ML"],
-)
+models_router = APIRouter(tags=["ML"])
 
 
 @models_router.get("/", status_code=status.HTTP_200_OK)
@@ -36,56 +37,52 @@ async def route_list_models(service: Annotated[MLService, Depends(_get_service)]
 @models_router.get("/{model_name}", status_code=status.HTTP_200_OK)
 async def route_get_model(
     service: Annotated[MLService, Depends(_get_service)],
-    model_name: str,
-):
+        model_name: str = "communes",
+) -> DocumentedMetadataML:
     """Get a specific model by identifier."""
     ml = await service.get(model_name)
     ml.to("cpu")
-    return {"name": ml.__class__.__name__, "device": str(ml.device)}
+    return DocumentedMetadataML(
+        name=ml.__class__.__name__,
+        device=str(ml.device),
+    )
 
 
-@models_router.get("/{model_name}/generate", status_code=status.HTTP_200_OK)
+@models_router.post("/{model_name}/generate", status_code=status.HTTP_200_OK)
 async def route_generate_model(
+    inference: Annotated[DocumentedInputInference, Query],
     service: Annotated[MLService, Depends(_get_service)],
-    model_name: str,
-    start_tokens: str = "",
-    max_length: int = 20,
-    temperature: float = 1.0,
-    top_k: int = 0,
-    top_p: float = 1.0,
-    n: int = 1,
-):
+        model_name: str = "communes",
+) -> DocumentedOutputInference:
     """Get a specific model by identifier."""
     list_result = []
     ml = await service.get(model_name)
     ml.to("cpu")
 
     time_start = time.perf_counter()
-    for _ in range(n):
+    for _ in range(inference.n):
         result = ml.generate_city_name(
-            start_tokens=start_tokens,
-            max_length=max_length,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
+            start_tokens=inference.start_tokens,
+            max_length=inference.max_length,
+            temperature=inference.temperature,
+            top_k=inference.top_k,
+            top_p=inference.top_p,
         )
         list_result.append(result)
 
     time_end = time.perf_counter()
     time_elapsed = round(time_end - time_start, 4)
-    avg_time = round(time_elapsed / n, 4)
-    nrbd = math.trunc(1 / time_elapsed)
-    nrps = math.trunc(1 / avg_time)
+    avg_time = round(time_elapsed / inference.n, 4)
+    nrps = math.trunc(1 / time_elapsed)
 
     list_result = sorted(list_result)
     set_result = sorted(list(set(list_result)))
 
-    return {
-        "name": ml.__class__.__name__,
-        "time_elapsed": time_elapsed,
-        "avg_time": avg_time,
-        "nrbd": nrbd,
-        "nrps": nrps,
-        "result": list_result,
-        "unique": set_result,
-    }
+    return DocumentedOutputInference(
+        name=ml.__class__.__name__,
+        time_elapsed=time_elapsed,
+        avg_time=avg_time,
+        nrps=nrps,
+        results=list_result,
+        uniques=set_result,
+    )
