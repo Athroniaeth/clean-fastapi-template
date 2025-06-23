@@ -8,7 +8,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 from loguru import logger
 
-from template.core.constants import State, FastAPI, Lifespan
+from template.core.constants import Lifespan
+from template.core.improve import State, FastAPI
 from template import get_version
 from template.core.exceptions import APIException
 from template.infrastructure.database.base import create_sessionmaker

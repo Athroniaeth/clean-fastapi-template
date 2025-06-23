@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Form
 
-from template.core.constants import Request
+from template.core.improve import Request
 from template.routes.api_keys import keys_router
 from template.routes.ml import models_router
 from template.schemas.users import UserReadResponse, UserCreateSchema

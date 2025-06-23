@@ -4,7 +4,7 @@ from aiobotocore.client import AioBaseClient
 from fastapi import Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.core.constants import Request
+from template.core.improve import Request
 from template.repositories.api_keys import APIKeyRepository
 from template.services.api_keys import api_key_header, APIKeyService
 

@@ -1,4 +1,5 @@
-import polars as pl
+from typing import List, Optional
+
 import typer
 
 from template import RAW_DATA_PATH
@@ -27,7 +28,7 @@ async def get_service_dataset():  # noqa
 
 
 @cli_dataset.command(name="get")
-async def get_dataset(identifier: str = typer.Argument(..., help="Dataset identifier to get")) -> pl.DataFrame:
+async def get_dataset(identifier: str = typer.Argument(..., help="Dataset identifier to get")):
     """Get a dataset by its identifier."""
     service = await get_service_dataset()
     dataset = await service.get(identifier)
@@ -40,7 +41,7 @@ async def get_dataset(identifier: str = typer.Argument(..., help="Dataset identi
 async def create_dataset(
     raw_data: str = typer.Argument(..., help="Raw data identifier (raw data folder)"),
     identifier: str = typer.Argument("default", help="Dataset identifier to create"),
-) -> pl.DataFrame:
+):
     """Create a dataset from the raw data."""
 
     path = RAW_DATA_PATH / f"{raw_data}.txt"
@@ -81,3 +82,21 @@ async def list_datasets():
     typer.echo("Available datasets:")
     for dataset in datasets:
         typer.echo(f"- {dataset}")
+
+
+@cli_dataset.command(name="merge")
+async def merge_datasets(
+    dataset: List[str] = typer.Option(..., help="Comma-separated list of dataset identifiers to merge"),
+    output: str = typer.Argument("merged_dataset", help="Output dataset identifier"),
+    ratio: Optional[float] = typer.Option(
+        None, help="Ratio of data to merge (default: 1.0, meaning 100% size of the smallest dataset)"
+    ),
+):
+    """Merge multiple datasets into a new dataset."""
+    service = await get_service_dataset()
+    await service.merge(
+        identifiers=dataset,
+        output_id=output,
+        ratio=ratio,
+    )
+    typer.echo(f"Datasets '{', '.join(dataset)}' merged into '{output}' successfully.")

@@ -13,7 +13,14 @@ from template.commands.users import cli_users
 from template.core.cli import AsyncTyper
 from template.core.constants import Level
 
-LoggingLevel = Annotated[Level, typer.Option("--logging-level", "-l", help="Log level of the application.")]
+LoggingLevel = Annotated[
+    Level,
+    typer.Option(
+        "--logging-level",
+        "-l",
+        help="Log level of the application.",
+    ),
+]
 
 cli = AsyncTyper(
     name="template",

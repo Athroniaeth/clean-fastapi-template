@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 
-import polars
+import polars as pl
+from loguru import logger
 
 from template.repositories.dataset import DatasetRepository
 
@@ -32,7 +33,7 @@ class DatasetService:
     def __init__(self, repo: DatasetRepository):
         self.repo = repo
 
-    async def get(self, identifier: str) -> polars.DataFrame:
+    async def get(self, identifier: str) -> pl.DataFrame:
         """
         Get the path of a dataset by its identifier.
 
@@ -53,7 +54,7 @@ class DatasetService:
         self,
         identifier: str,
         text: str,
-    ) -> polars.DataFrame:
+    ) -> pl.DataFrame:
         """
         Create a dataset from the raw data.
 
@@ -69,7 +70,7 @@ class DatasetService:
             raise FileExistsError(f"Dataset '{identifier}' already exists.")
 
         dataset = _preprocess(text)
-        dataset = polars.DataFrame({DEFAULT_COLUMN_NAME: dataset})
+        dataset = pl.DataFrame({DEFAULT_COLUMN_NAME: dataset})
         await self.repo.create(identifier, dataset)
         return dataset
 
@@ -91,3 +92,60 @@ class DatasetService:
             list[str]: A list of dataset identifiers (file names without extension).
         """
         return await self.repo.list()
+
+    async def merge(self, identifiers: List[str], output_id: str, ratio: Optional[float] = None) -> pl.DataFrame:
+        """
+        Merge multiple datasets into a single dataset.
+
+        Args:
+            identifiers (List[str]): List of dataset identifiers to merge.
+            output_id (str): The identifier for the output dataset.
+            ratio (Optional[float]): Ratio of data to merge (default: None, meaning 100% size of the smallest dataset).
+
+        Returns:
+            pl.DataFrame: The merged dataset (polars DataFrame).
+        """
+        dfs = []
+        if not identifiers:
+            raise ValueError("No identifiers provided for merging datasets.")
+
+        if await self.repo.exists(output_id):
+            raise FileExistsError(f"Output dataset '{output_id}' already exists.")
+
+        # Merge all given datasets
+        for identifier in identifiers:
+            df = await self.get(identifier)
+            dfs.append(df)
+
+        if ratio:
+            _dfs = []
+            min_rows = min(len(df) for df in dfs)
+            min_rows_ratio = min(len(df) for df in dfs) * ratio
+            logger.debug(f"Normalizing datasets to have the same number of rows. {ratio=}")
+
+            for id, df in zip(identifiers, dfs):
+                if len(df) > min_rows_ratio:
+                    sampled_df = df.sample(n=min_rows_ratio, shuffle=True)
+                    _dfs.append(sampled_df)
+                else:
+                    sampled_df = df.sample(n=len(df), shuffle=True)
+                    _dfs.append(sampled_df)
+
+                logger.debug(f"- '{id}' dataset sampled to {sampled_df.shape[0]} rows")
+
+            dfs = _dfs
+            total_rows = sum(len(df) for df in dfs)
+            logger.debug(
+                f"Minimum number of rows: ~{min_rows}, pass to {total_rows} rows ({min_rows} to {min_rows_ratio:.0f} rows per dataset)"
+            )
+        else:
+            total_rows = sum(len(df) for df in dfs)
+            logger.debug(f"Merging datasets, total rows: {total_rows}")
+
+        merged_df = pl.concat(dfs)
+
+        # Remove duplicates based on the "text" column
+        merged_df = merged_df.unique(subset=["text"])
+
+        await self.repo.create(output_id, merged_df)
+        return merged_df
