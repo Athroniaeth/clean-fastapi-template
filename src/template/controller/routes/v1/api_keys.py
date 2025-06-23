@@ -11,14 +11,13 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.controller.routes.depends import inject_db
-from template.repositories.api_keys import APIKeyRepository
+from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
 from template.schemas.api_keys import (
     APIKeyCreateResponseSchema,
     APIKeyCreateSchema,
     APIKeyReadResponseSchema,
     APIKeyUpdateSchema,
 )
-from template.services.api_keys import APIKeyService
 
 
 async def _get_service(session: Annotated[AsyncSession, Depends(inject_db)]) -> APIKeyService:

@@ -12,13 +12,8 @@ import pytest
 from fastapi.openapi.models import APIKey
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.repositories.api_keys import APIKeyRepository
-from template.services.api_keys import (
-    APIKeyService,
-    APIKeyNotFoundException,
-    APIKeyNotProvidedException,
-    APIKeyInvalidException,
-)
+from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
+from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException
 from template.schemas.api_keys import (
     APIKeyCreateSchema,
     APIKeyUpdateSchema,

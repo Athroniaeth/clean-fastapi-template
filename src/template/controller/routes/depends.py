@@ -2,11 +2,11 @@ from typing import Annotated, Optional, AsyncIterator
 
 from aiobotocore.client import AioBaseClient
 from fastapi import Depends, Security
+from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.core.improve import Request
-from template.repositories.api_keys import APIKeyRepository
-from template.services.api_keys import api_key_header, APIKeyService
+from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
 
 
 async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:
@@ -33,6 +33,9 @@ async def inject_s3(request: Request) -> AsyncIterator[AioBaseClient]:
         raise
     finally:
         pass  # No explicit close needed for boto3 sessions
+
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 async def verify_api_key(

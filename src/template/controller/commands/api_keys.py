@@ -18,8 +18,8 @@ async def get_service():
     """Helper to retrieve a service instance with an active DB session."""
 
     from template.infrastructure.database.base import get_db
-    from template.repositories.api_keys import APIKeyRepository
-    from template.services.api_keys import APIKeyService
+    from template.infrastructure.database.api_keys import APIKeyRepository
+    from template.infrastructure.database.api_keys import APIKeyService
 
     from template.settings import get_settings
 

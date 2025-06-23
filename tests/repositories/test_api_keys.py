@@ -1,8 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.models.api_keys import ApiKeyModel
-from template.repositories.api_keys import APIKeyRepository
+from template.infrastructure.database.api_keys import APIKeyRepository, ApiKeyModel
 
 
 @pytest.fixture(scope="function")
