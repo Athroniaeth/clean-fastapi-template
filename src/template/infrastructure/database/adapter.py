@@ -129,6 +129,19 @@ class PostgresDatabaseInfra(AbstractDatabaseInfra):
         super().__init__(database_url, echo, future, expire_on_commit)
 
 
+class SQLiteDatabaseInfra(AbstractDatabaseInfra):
+    """SQLite database infrastructure using aiosqlite."""
+
+    def __init__(
+        self,
+        database_url: str = "sqlite+aiosqlite:///./test.db",
+        echo: bool = False,
+        future: bool = True,
+        expire_on_commit: bool = False,
+    ):
+        super().__init__(database_url, echo, future, expire_on_commit)
+
+
 class InMemorySQLiteDatabaseInfra(AbstractDatabaseInfra):
     """SQLite in-memory database infrastructure using aiosqlite."""
 

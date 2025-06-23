@@ -9,7 +9,7 @@ from template.controller.routes.v1.ml import models_router
 
 
 index_router = APIRouter(tags=["Utils"])
-api_router = APIRouter(tags=["API"], prefix="/api/v1")
+api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(keys_router)
 api_router.include_router(models_router)
 

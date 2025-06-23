@@ -14,8 +14,7 @@ from fastapi.params import Query
 from template.controller.routes.depends import inject_s3
 from template.infrastructure.storage.base import S3StorageInfra
 from template.models.ml import DocumentedOutputInference, DocumentedMetadataML, DocumentedInputInference, MetadataTokenizer
-from template.repositories.ml import MLRepository
-from template.services.ml import MLService
+from template.domain.ml import MLRepository, MLService
 
 
 async def _get_service(s3_client: Annotated[S3StorageInfra, Depends(inject_s3)]) -> MLService:

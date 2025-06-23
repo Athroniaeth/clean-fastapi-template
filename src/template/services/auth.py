@@ -4,13 +4,12 @@ from typing import Optional
 from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.core.exceptions import APIException
-from template.controller.routes.depends import inject_db
-from template.repositories.users import UserRepository
+from template.infrastructure.database.adapter import SQLiteDatabaseInfra
+from template.infrastructure.database.users import UserRepository, UserService
 from template.schemas.users import UserReadResponse, UserCreateSchema
-from template.services.users import UserService, UserNotFoundException
+from template.domain.users import UserNotFoundException
 
 
 class JWTCredentialException(APIException):
@@ -111,11 +110,12 @@ class AuthService:
         return user
 
 
-def get_user_service(session: AsyncSession = Depends(inject_db)) -> UserService:
+def get_user_service() -> UserService:
     """
     Provide a new UserService instance.
     """
-    repo = UserRepository(session)
+    infra = SQLiteDatabaseInfra()
+    repo = UserRepository(infra)
     return UserService(repo)
 
 

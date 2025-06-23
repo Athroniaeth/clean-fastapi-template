@@ -17,18 +17,17 @@ cli_users = AsyncTyper(
 async def get_service():
     """Helper to retrieve a service instance with an active DB session."""
 
-    from template.infrastructure.database.base import get_db
-    from template.repositories.users import UserRepository
-    from template.services.users import UserService
+    from template.infrastructure.database.users import UserRepository
+    from template.infrastructure.database.users import UserService
 
+    from template.settings import get_database_infra
     from template.settings import get_settings
 
     settings = get_settings()
-
-    async with get_db(settings.database_url) as session:
-        repo = UserRepository(session)
-        yield UserService(repo)
-        await session.close()
+    infra_storage = get_database_infra(settings)
+    await infra_storage.create_schema()
+    repo = UserRepository(infra_storage)
+    yield UserService(repo)
 
 
 @cli_users.command("create")

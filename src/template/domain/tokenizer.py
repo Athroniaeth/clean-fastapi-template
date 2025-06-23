@@ -6,7 +6,7 @@ from typing import Dict, Self, Sequence, List, Type
 
 import polars as pl
 
-from template.domain.dataset import DEFAULT_COLUMN_NAME
+
 from template.infrastructure.storage.adapter import PickleRepository
 from template.infrastructure.storage.base import AbstractStorageInfra
 
@@ -159,6 +159,8 @@ class TokenizerService:
         Returns:
             Tokenizer: The created dataset (polars DataFrame).
         """
+        from template.domain.dataset import DEFAULT_COLUMN_NAME
+
         # Fast failure if the identifier already exists (prevents unnecessary processing)
         if await self.repo.exists(identifier):
             raise FileExistsError(f"Tokenizer '{identifier}' already exists.")

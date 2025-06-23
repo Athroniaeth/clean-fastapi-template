@@ -9,6 +9,8 @@ from sqlalchemy.engine.url import URL
 from types_aiobotocore_s3.literals import BucketLocationConstraintType
 
 from template import DATA_PATH
+from template.infrastructure.database.adapter import PostgresDatabaseInfra, SQLiteDatabaseInfra
+from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.storage.base import AbstractStorageInfra, S3StorageInfra, LocalStorageInfra
 
 
@@ -140,6 +142,14 @@ def get_settings() -> Settings:
 
     # Return the settings class instance
     return settings_class()
+
+
+def get_database_infra(settings: Settings) -> AbstractDatabaseInfra:
+    """Get the database settings based on the provided settings."""
+    if settings.environment == Environment.DEVELOPMENT:
+        return SQLiteDatabaseInfra()
+
+    return PostgresDatabaseInfra()
 
 
 def get_storage_infra(settings: Settings) -> AbstractStorageInfra:
