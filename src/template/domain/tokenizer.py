@@ -1,6 +1,14 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Self, Sequence, List
+from typing import Dict, Self, Sequence, List, Type
+
+import polars as pl
+
+from template.domain.dataset import DEFAULT_COLUMN_NAME
+from template.infrastructure.storage.adapter import PickleRepository
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 
 @dataclass
@@ -98,3 +106,83 @@ class CharTokenizer(Tokenizer):
     def decode(self, indices: Sequence[int]) -> List[str]:
         """Decode a list of indices into a string."""
         return [self._decode(token) for token in indices]
+
+
+class TokenizerRepository(PickleRepository[Tokenizer]):
+    """Repository for persisting tokenizer objects as pickled files."""
+
+    def __init__(self, infra_storage: AbstractStorageInfra) -> None:
+        super().__init__(
+            infra_storage,
+            type_object=Tokenizer,
+            prefix="tokenizers/",
+        )
+
+
+class TokenizerService:
+    """Service for managing datasets (preprocessed raw data)."""
+
+    def __init__(self, repo: TokenizerRepository):
+        self.repo = repo
+
+    async def get(self, identifier: str) -> Tokenizer:
+        """
+        Get the path of a dataset by its identifier.
+
+        Args:
+            identifier (str): The identifier of the dataset.
+
+        Returns:
+            Path: The path of the dataset.
+        """
+        df = await self.repo.get(identifier)
+
+        if df is None:
+            raise FileNotFoundError(f"Tokenizer '{identifier}' does not exist.")
+
+        return df
+
+    async def create(
+        self,
+        identifier: str,
+        dataset: pl.DataFrame,
+        class_: Type[Tokenizer] = CharTokenizer,
+    ) -> Tokenizer:
+        """
+        Create a dataset from the raw data.
+
+        Args:
+            identifier (str): The identifier for the dataset (file name without extension).
+            dataset (pl.DataFrame): The raw data as a polars DataFrame.
+            class_ (Type[Tokenizer]): The tokenizer class to use for the dataset (default: CharTokenizer).
+
+        Returns:
+            Tokenizer: The created dataset (polars DataFrame).
+        """
+        # Fast failure if the identifier already exists (prevents unnecessary processing)
+        if await self.repo.exists(identifier):
+            raise FileExistsError(f"Tokenizer '{identifier}' already exists.")
+
+        sentences = dataset[DEFAULT_COLUMN_NAME].to_list()
+        tokenizer = class_.from_sentences(sentences=sentences)
+        await self.repo.create(identifier, tokenizer)
+        return tokenizer
+
+    async def delete(self, identifier: str) -> None:
+        """
+        Delete a dataset by its identifier.
+
+        Args:
+            identifier (str): The identifier of the dataset.
+        """
+        if not await self.repo.delete(identifier):
+            raise FileNotFoundError(f"Tokenizer '{identifier}' does not exist.")
+
+    async def list(self) -> List[str]:
+        """
+        List all datasets in the repository.
+
+        Returns:
+            list[str]: A list of dataset identifiers (file names without extension).
+        """
+        return await self.repo.list()
