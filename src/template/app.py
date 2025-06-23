@@ -13,7 +13,7 @@ from template.core.improve import State, FastAPI
 from template import get_version
 from template.core.exceptions import APIException
 from template.infrastructure.database.base import create_sessionmaker
-from template.routes.index import index_router, api_router
+from template.controller.routes.v1 import index_router, api_router
 from template.settings import get_settings, Settings, get_storage_infra
 
 

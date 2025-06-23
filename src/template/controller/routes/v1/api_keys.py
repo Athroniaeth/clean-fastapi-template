@@ -10,7 +10,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.depends import inject_db
+from template.controller.routes.depends import inject_db
 from template.repositories.api_keys import APIKeyRepository
 from template.schemas.api_keys import (
     APIKeyCreateResponseSchema,

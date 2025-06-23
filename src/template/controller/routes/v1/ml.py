@@ -11,7 +11,7 @@ from fastapi import (
 )
 from fastapi.params import Query
 
-from template.depends import inject_s3
+from template.controller.routes.depends import inject_s3
 from template.infrastructure.storage.base import S3StorageInfra
 from template.models.ml import DocumentedOutputInference, DocumentedMetadataML, DocumentedInputInference, MetadataTokenizer
 from template.repositories.ml import MLRepository

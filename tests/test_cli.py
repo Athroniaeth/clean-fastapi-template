@@ -5,7 +5,7 @@ an async replacement for get_service so no real database is used.
 The mocks return plain, lightweight objects (types.SimpleNamespace)
 so the CLI prints predictable values instead of AsyncMock IDs.
 
-All docstrings follow Google format; comments are concise and in English.
+All docstrings follow Google format; comments are concise and in English.
 """
 
 from contextlib import asynccontextmanager
@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from template.commands.api_keys import cli_keys
+from template.controller.commands.api_keys import cli_keys
 
 # Shared runner used in every test.
 runner = CliRunner()
@@ -55,7 +55,7 @@ def patch_get_service(target_module: str, service: AsyncMock):
 
 def test_create_key(service_mock):
     """CLI create should print the new key's ID and plain key."""
-    with patch_get_service("template.commands.api_keys", service_mock):
+    with patch_get_service("template.controller.commands.api_keys", service_mock):
         result = runner.invoke(
             cli_keys,
             [
@@ -76,7 +76,7 @@ def test_create_key(service_mock):
 
 def test_delete_key(service_mock):
     """CLI delete should call service.delete exactly once."""
-    with patch_get_service("template.commands.api_keys", service_mock):
+    with patch_get_service("template.controller.commands.api_keys", service_mock):
         result = runner.invoke(cli_keys, ["delete", "1"])
 
     assert result.exit_code == 0, result.output
@@ -86,7 +86,7 @@ def test_delete_key(service_mock):
 
 def test_activate_key(service_mock):
     """CLI activate should set the key to active and echo confirmation."""
-    with patch_get_service("template.commands.api_keys", service_mock):
+    with patch_get_service("template.controller.commands.api_keys", service_mock):
         result = runner.invoke(cli_keys, ["activate", "1"])
 
     assert result.exit_code == 0, result.output
@@ -96,7 +96,7 @@ def test_activate_key(service_mock):
 
 def test_deactivate_key(service_mock):
     """CLI deactivate should set the key to inactive and echo confirmation."""
-    with patch_get_service("template.commands.api_keys", service_mock):
+    with patch_get_service("template.controller.commands.api_keys", service_mock):
         result = runner.invoke(cli_keys, ["deactivate", "1"])
 
     assert result.exit_code == 0, result.output
@@ -106,7 +106,7 @@ def test_deactivate_key(service_mock):
 
 def test_list_keys(service_mock):
     """CLI list must print every key returned by the service."""
-    with patch_get_service("template.commands.api_keys", service_mock):
+    with patch_get_service("template.controller.commands.api_keys", service_mock):
         result = runner.invoke(cli_keys, ["list"])
 
     assert result.exit_code == 0, result.output

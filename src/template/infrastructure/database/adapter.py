@@ -114,3 +114,29 @@ class AbstractCRUDRepository(Generic[T], ABC):
             stmt = delete(self._model).where(self._model.id == id_)
             result = await session.execute(stmt)
             return result.rowcount > 0
+
+
+class PostgresDatabaseInfra(AbstractDatabaseInfra):
+    """PostgreSQL database infrastructure using asyncpg."""
+
+    def __init__(
+        self,
+        database_url: str = "postgresql+asyncpg://user:password@localhost/dbname",
+        echo: bool = False,
+        future: bool = True,
+        expire_on_commit: bool = False,
+    ):
+        super().__init__(database_url, echo, future, expire_on_commit)
+
+
+class InMemorySQLiteDatabaseInfra(AbstractDatabaseInfra):
+    """SQLite in-memory database infrastructure using aiosqlite."""
+
+    def __init__(
+        self,
+        database_url: str = "sqlite+aiosqlite:///:memory:",
+        echo: bool = False,
+        future: bool = True,
+        expire_on_commit: bool = False,
+    ):
+        super().__init__(database_url, echo, future, expire_on_commit)

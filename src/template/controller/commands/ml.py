@@ -3,8 +3,8 @@ from typing import Optional
 import typer
 from tqdm import tqdm
 
-from template.commands.dataset import get_service_dataset
-from template.commands.tokenizer import get_service_tokenizer
+from template.controller.commands.dataset import get_service_dataset
+from template.controller.commands.tokenizer import get_service_tokenizer
 from template.core.cli import AsyncTyper
 
 cli_ml = AsyncTyper(
