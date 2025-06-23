@@ -11,12 +11,13 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.controller.routes.depends import inject_db
-from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
-from template.schemas.api_keys import (
-    APIKeyCreateResponseSchema,
-    APIKeyCreateSchema,
-    APIKeyReadResponseSchema,
-    APIKeyUpdateSchema,
+from template.infrastructure.database.api_keys import APIKeyRepository
+from template.application.api_keys import APIKeyService
+from template.controller.routes.schemas.api_keys import (
+    APIKeyCreate,
+    DocumentedAPIKeyRead,
+    APIKeyUpdate,
+    DocumentedAPIKeyCreateResponse,
 )
 
 
@@ -36,19 +37,19 @@ keys_router = APIRouter(
 async def get_api_key(
     id_: int,
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> APIKeyReadResponseSchema:
+) -> DocumentedAPIKeyRead:
     return await service.get(id_)
 
 
 @keys_router.post(
     "/",
-    response_model=APIKeyCreateResponseSchema,
+    response_model=DocumentedAPIKeyCreateResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_api_key(
-    payload: Annotated[APIKeyCreateSchema, Query(...)],
+    payload: Annotated[APIKeyCreate, Query(...)],
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> APIKeyCreateResponseSchema:
+) -> DocumentedAPIKeyCreateResponse:
     return await service.create(payload)
 
 
@@ -58,7 +59,7 @@ async def list_api_keys(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     active_only: bool = Query(False),
-) -> Sequence[APIKeyReadResponseSchema]:
+) -> Sequence[DocumentedAPIKeyRead]:
     return await service.list_all(
         skip=skip,
         limit=limit,
@@ -93,7 +94,7 @@ async def delete_api_key(
 @keys_router.patch("/{id_}", status_code=status.HTTP_200_OK)
 async def update_api_key(
     id_: int,
-    payload: Annotated[APIKeyUpdateSchema, Query()],
+    payload: Annotated[APIKeyUpdate, Query()],
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> APIKeyReadResponseSchema:
+) -> DocumentedAPIKeyRead:
     return await service.update(id_, payload)

@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class APIKeySelectSchema(BaseModel):
+class APIKeySelect(BaseModel):
     """Schema for selecting an API key by its identifier.
 
     Attributes:
@@ -14,7 +14,7 @@ class APIKeySelectSchema(BaseModel):
     id: int = Field(...)
 
 
-class APIKeyBaseSchema(BaseModel):
+class APIKeySchema(BaseModel):
     """Shared properties for API key input and output operations.
 
     Attributes:
@@ -30,17 +30,7 @@ class APIKeyBaseSchema(BaseModel):
     is_active: bool = Field(True)
 
 
-class APIKeyCreateSchema(APIKeyBaseSchema):
-    """Schema for creating a new API key.
-
-    Inherits:
-        APIKeyBaseSchema: name, description, and is_active fields.
-    """
-
-    ...
-
-
-class APIKeyUpdateSchema(APIKeyBaseSchema):
+class APIKeyCreate(APIKeySchema):
     """Schema for full replacement (PUT) of an existing API key.
 
     Attributes:
@@ -52,7 +42,19 @@ class APIKeyUpdateSchema(APIKeyBaseSchema):
     ...
 
 
-class APIKeyReadResponse(APIKeySelectSchema, APIKeyBaseSchema):
+class APIKeyUpdate(APIKeySchema):
+    """Schema for full replacement (PUT) of an existing API key.
+
+    Attributes:
+        name (str): New human-readable name.
+        description (Optional[str]): New description.
+        is_active (bool): New activation status.
+    """
+
+    ...
+
+
+class APIKeyRead(APIKeySelect, APIKeySchema):
     """Schema returned for API key data in responses.
 
     Attributes:
@@ -66,7 +68,7 @@ class APIKeyReadResponse(APIKeySelectSchema, APIKeyBaseSchema):
     created_at: datetime
 
 
-class APIKeyCreateResponse(APIKeyReadResponse):
+class APIKeyCreateResponse(APIKeyRead):
     """Response schema for API key creation.
 
     Extends:
@@ -79,11 +81,11 @@ class APIKeyCreateResponse(APIKeyReadResponse):
     plain_key: Optional[str] = Field(default=None, exclude=True)
 
 
-class APIKeyReadResponseSchema(APIKeyReadResponse):
+class DocumentedAPIKeyRead(APIKeyRead):
     model_config = {
         "json_schema_extra": {
             "examples": [
-                APIKeyReadResponse(
+                APIKeyRead(
                     id=1,
                     name="Example API Key",
                     description="This is an example API key.",
@@ -95,7 +97,7 @@ class APIKeyReadResponseSchema(APIKeyReadResponse):
     }
 
 
-class APIKeyCreateResponseSchema(APIKeyCreateResponse):
+class DocumentedAPIKeyCreateResponse(APIKeyCreateResponse):
     model_config = {
         "json_schema_extra": {
             "examples": [

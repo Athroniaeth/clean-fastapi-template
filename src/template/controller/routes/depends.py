@@ -6,7 +6,8 @@ from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from template.core.improve import Request
-from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
+from template.infrastructure.database.api_keys import APIKeyRepository
+from template.application.api_keys import APIKeyService
 
 
 async def inject_db(request: Request) -> AsyncIterator[AsyncSession]:

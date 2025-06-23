@@ -19,7 +19,7 @@ async def get_service():
 
     from template.infrastructure.database.base import get_db
     from template.infrastructure.database.api_keys import APIKeyRepository
-    from template.infrastructure.database.api_keys import APIKeyService
+    from template.application.api_keys import APIKeyService
 
     from template.settings import get_settings
 
@@ -46,10 +46,10 @@ async def create_key(
         is_active (bool): Whether the key is active upon creation.
     """
 
-    from template.schemas.api_keys import APIKeyCreateSchema
+    from template.controller.routes.schemas.api_keys import APIKeyCreate
 
     async with get_service() as service:
-        schema = APIKeyCreateSchema(name=name, description=description, is_active=is_active)
+        schema = APIKeyCreate(name=name, description=description, is_active=is_active)
         created_key = await service.create(schema)
         typer.echo(f"✅ Key created: ID={created_key.id}, Name={created_key.name}")
         typer.echo(f"🔑 Plain key (save it now): {created_key.plain_key}")

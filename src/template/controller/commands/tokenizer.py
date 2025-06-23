@@ -13,10 +13,10 @@ cli_tokenizer = AsyncTyper(
 
 async def get_service_tokenizer():  # noqa
     """Get the tokenizer service."""
-    from template.domain.tokenizer import TokenizerRepository
+    from template.infrastructure.storage.tokenizer import TokenizerRepository
 
     from template.settings import get_storage_infra
-    from template.domain.tokenizer import TokenizerService
+    from template.application.tokenizer import TokenizerService
     from template.settings import get_settings
 
     settings = get_settings()

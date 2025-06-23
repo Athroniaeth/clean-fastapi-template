@@ -12,18 +12,17 @@ import pytest
 from fastapi.openapi.models import APIKey
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.infrastructure.database.api_keys import APIKeyRepository, APIKeyService
+from template.controller.routes.schemas.api_keys import APIKeyCreate, APIKeyUpdate
+from template.infrastructure.database.api_keys import APIKeyRepository
+from template.application.api_keys import APIKeyService
 from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException
-from template.schemas.api_keys import (
-    APIKeyCreateSchema,
-    APIKeyUpdateSchema,
-)
+
 
 
 @pytest.fixture
-def key_data() -> APIKeyCreateSchema:
+def key_data() -> APIKeyCreate:
     """Static input data reused across several tests."""
-    return APIKeyCreateSchema(
+    return APIKeyCreate(
         name="unit_test_service_key",
         description="Key created in service unit test",
         is_active=True,
@@ -57,7 +56,7 @@ async def service(repository: APIKeyRepository) -> APIKeyService:
 
 
 @pytest.fixture(scope="function")
-async def created_key(service: APIKeyService, key_data: APIKeyCreateSchema):
+async def created_key(service: APIKeyService, key_data: APIKeyCreate):
     """Create a key through the service and return the creation response."""
     return await service.create(key_data)
 
@@ -78,7 +77,7 @@ async def test_get_nonexistent_key_raises(service: APIKeyService):
         await service.get(key_id=9999)
 
 
-async def test_create_key_returns_plain_key(service: APIKeyService, key_data: APIKeyCreateSchema):
+async def test_create_key_returns_plain_key(service: APIKeyService, key_data: APIKeyCreate):
     """create should return a response with both ID and one-time plain_key.
 
     Args:
@@ -135,7 +134,7 @@ async def test_verify_key_not_provided(service: APIKeyService):
 async def test_update_key_description(service: APIKeyService, created_key: APIKey):
     """update must persist field changes and return updated schema."""
     new_desc = "Updated description via unit test"
-    update_schema = APIKeyUpdateSchema(
+    update_schema = APIKeyUpdate(
         name=created_key.name,
         description=new_desc,
         is_active=created_key.is_active,

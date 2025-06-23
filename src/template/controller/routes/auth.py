@@ -7,8 +7,9 @@ from jose import jwt, JWTError
 
 from template.core.exceptions import APIException
 from template.infrastructure.database.adapter import SQLiteDatabaseInfra
-from template.infrastructure.database.users import UserRepository, UserService
-from template.schemas.users import UserReadResponse, UserCreateSchema
+from template.infrastructure.database.users import UserRepository
+from template.application.users import UserService
+from template.controller.routes.schemas.users import UserReadResponse, UserCreateSchema
 from template.domain.users import UserNotFoundException
 
 
