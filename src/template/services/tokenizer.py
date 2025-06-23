@@ -4,7 +4,7 @@ import polars as pl
 
 from template.domain.tokenizer import Tokenizer, CharTokenizer
 from template.repositories.tokenizer import TokenizerRepository
-from template.services.dataset import DEFAULT_COLUMN_NAME
+from template.domain.dataset import DEFAULT_COLUMN_NAME
 
 
 class TokenizerService:

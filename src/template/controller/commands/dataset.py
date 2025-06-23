@@ -15,8 +15,8 @@ cli_dataset = AsyncTyper(
 
 async def get_service_dataset():  # noqa
     """Get the dataset service."""
-    from template.services.dataset import DatasetService
-    from template.repositories.dataset import DatasetRepository
+    from template.domain.dataset import DatasetService
+    from template.domain.dataset import DatasetRepository
     from template.settings import get_settings
     from template.settings import get_storage_infra
 

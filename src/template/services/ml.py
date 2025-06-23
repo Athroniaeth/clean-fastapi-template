@@ -6,11 +6,10 @@ from torch import nn
 from torch.optim.lr_scheduler import LinearLR
 from torchmetrics.classification import MulticlassAccuracy
 
-from template.domain.dataset import NLPDataset
+from template.domain.dataset import Dataset, DEFAULT_COLUMN_NAME
 from template.domain.ml import NLPModel, BengioMLP
 from template.domain.tokenizer import Tokenizer
 from template.repositories.ml import MLRepository
-from template.services.dataset import DEFAULT_COLUMN_NAME
 from template.core.ml import split_dataset, train_model
 
 
@@ -84,7 +83,7 @@ class MLService:
 
         sentences = dataframe[DEFAULT_COLUMN_NAME].to_list()
 
-        dataset = NLPDataset(
+        dataset = Dataset(
             sentences=sentences,
             type_tokenizer=type(tokenizer),
         )
