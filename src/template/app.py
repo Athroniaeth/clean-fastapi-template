@@ -1,42 +1,43 @@
+from loguru import logger
+
 from contextlib import asynccontextmanager
 from functools import partial
 from typing import AsyncIterator
-
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
-from loguru import logger
-
 from template.core.constants import Lifespan
 from template.core.improve import State, FastAPI
 from template import get_version
 from template.core.exceptions import APIException
-from template.infrastructure.database.base import create_sessionmaker
+
 from template.controller.routes.v1.router import index_router, api_router
-from template.settings import get_settings, Settings, get_storage_infra
+
+from template.infrastructure.storage.base import AbstractStorageInfra
+from template.infrastructure.database.base import AbstractDatabaseInfra
+
+from template.settings import get_settings, Settings, get_storage_infra, get_database_infra
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI, settings: Settings) -> AsyncIterator[State]:
+async def lifespan(
+    app: FastAPI,
+    settings: Settings,
+    infra_storage: AbstractStorageInfra,
+    infra_database: AbstractDatabaseInfra,
+) -> AsyncIterator[State]:
     """Basic lifespan context manager for FastAPI."""
 
     # Note: We log with TRACE for not spam with pytest
     logger.debug("Starting FastAPI application lifecycle")
 
-    # Create an async engine
-    async_session = await create_sessionmaker(settings.database_url)
-
-    # Initialize the storage (file) infrastructure
-    infra_storage = get_storage_infra(settings)
-    # Todo: Hard to test, need found solution
-    # await s3_client.ensure_bucket_exists()
-
-    state: State = State(
+    state = State(
         title=app.title,
         version=app.version,
         description=app.description,
-        async_session=async_session,
+        settings=settings,
+        infra_database=infra_database,
         infra_storage=infra_storage,
     )
     yield state
@@ -88,14 +89,26 @@ def create_app(
 
 def factory_app() -> FastAPI:
     """Create the FastAPI application."""
-    # Load settings
+    # Load settings from config file
     settings = get_settings()
+
+    # Initialize the infrastructure
+    infra_storage = get_storage_infra(settings)
+    infra_database = get_database_infra(settings)
+
+    # Todo: Hard to test, need found solution
+    # await s3_client.ensure_bucket_exists()
 
     # Create the FastAPI app
     app = create_app(
         title="Template FastAPI App",
         version=get_version(),
         description="A template FastAPI application with async capabilities.",
-        lifespan=partial(lifespan, settings=settings),
+        lifespan=partial(
+            lifespan,
+            settings=settings,
+            infra_database=infra_database,
+            infra_storage=infra_storage,
+        ),
     )
     return app

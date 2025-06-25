@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from template.domain.ml import NLPModel
 from template.domain.tokenizer import Tokenizer
-from template.infrastructure.storage.adapter import PickleRepository
+from template.infrastructure.storage.local import PickleRepository
 from template.infrastructure.storage.base import AbstractStorageInfra
 
 

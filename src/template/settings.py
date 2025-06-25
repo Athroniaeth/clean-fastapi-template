@@ -1,17 +1,16 @@
 import os
 from abc import ABC
 from enum import Enum
+from pathlib import Path
 
 from loguru import logger
 from pydantic import Field, ConfigDict, HttpUrl
 from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
-from types_aiobotocore_s3.literals import BucketLocationConstraintType
 
 from template import DATA_PATH
-from template.infrastructure.database.adapter import PostgresDatabaseInfra, SQLiteDatabaseInfra
 from template.infrastructure.database.base import AbstractDatabaseInfra
-from template.infrastructure.storage.base import AbstractStorageInfra, S3StorageInfra, LocalStorageInfra
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 
 class SettingsError(Exception):
@@ -71,7 +70,7 @@ class Settings(ABC, BaseSettings):
     local_storage: bool = Field(default=True, alias="LOCAL_STORAGE")
 
     s3_bucket: str = Field(..., alias="S3_BUCKET")
-    s3_region: BucketLocationConstraintType = Field(default="us-east-1", alias="S3_REGION")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
     s3_endpoint_url: HttpUrl | None = Field(default=None, alias="S3_ENDPOINT_URL")  # Optional for localstack/minio
     s3_access_key_id: str = Field(..., alias="S3_ACCESS_KEY_ID")
     s3_secret_access_key: str = Field(..., alias="S3_SECRET_ACCESS_KEY")
@@ -94,7 +93,7 @@ class DevelopmentSettings(Settings):
     local_storage: bool = Field(default=True, alias="LOCAL_STORAGE")
 
     s3_bucket: str = Field(default="test-bucket", alias="S3_BUCKET")
-    s3_region: BucketLocationConstraintType = Field(default="eu-west-1", alias="S3_REGION")
+    s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
     s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
     s3_access_key_id: str = Field(default="None", alias="S3_ACCESS_KEY_ID")
     s3_secret_access_key: str = Field(default="None", alias="S3_SECRET_ACCESS_KEY")
@@ -116,7 +115,7 @@ class ProductionSettings(Settings):
     local_storage: bool = Field(default=False, alias="LOCAL_STORAGE")
 
     s3_bucket: str = Field(default="test-bucket", alias="S3_BUCKET")
-    s3_region: BucketLocationConstraintType = Field(default="eu-west-1", alias="S3_REGION")
+    s3_region: str = Field(default="eu-west-1", alias="S3_REGION")
     s3_endpoint_url: HttpUrl = Field(default="http://localhost:5000", alias="S3_ENDPOINT_URL")  # ty: ignore[invalid-assignment]
     s3_access_key_id: str = Field(default="None", alias="S3_ACCESS_KEY_ID")
     s3_secret_access_key: str = Field(default="None", alias="S3_SECRET_ACCESS_KEY")
@@ -146,6 +145,9 @@ def get_settings() -> Settings:
 
 def get_database_infra(settings: Settings) -> AbstractDatabaseInfra:
     """Get the database settings based on the provided settings."""
+
+    from template.infrastructure.database.adapter import PostgresDatabaseInfra, SQLiteDatabaseInfra
+
     if settings.environment == Environment.DEVELOPMENT:
         return SQLiteDatabaseInfra()
 
@@ -157,8 +159,14 @@ def get_storage_infra(settings: Settings) -> AbstractStorageInfra:
     Get the storage settings based on the provided settings.
     This is useful for testing purposes.
     """
+    from template.infrastructure.storage.s3 import S3StorageInfra
+
+    from template.infrastructure.storage.local import LocalStorageInfra
+
     if settings.local_storage:
-        logger.debug(f"Using local storage infrastructure with base path: '{DATA_PATH}'")
+        base_path = DATA_PATH.relative_to(Path(os.getcwd()).parent)
+        logger.info("Using LocalStorageInfra infrastructure")
+        logger.debug(f"LocalStorageInfra using base path '{base_path}'")
         return LocalStorageInfra(base_path=DATA_PATH)
 
     logger.debug(f"Using S3 storage infrastructure with bucket: '{settings.s3_bucket}'")

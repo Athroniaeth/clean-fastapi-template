@@ -17,7 +17,7 @@ cli_users = AsyncTyper(
 async def get_service():
     """Helper to retrieve a service instance with an active DB session."""
 
-    from template.infrastructure.database.users import UserRepository
+    from template.infrastructure.repositories.users import UserRepository
     from template.application.users import UserService
 
     from template.settings import get_database_infra

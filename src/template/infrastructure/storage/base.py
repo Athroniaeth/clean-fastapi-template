@@ -1,24 +1,14 @@
-import asyncio
 from abc import abstractmethod, ABC
-from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
 from io import BytesIO
-from pathlib import Path
-from typing import AsyncIterator, Optional, Union, List
-
-import aioboto3
-import aiofiles
-import httpx
-from botocore.exceptions import ClientError
-from types_aiobotocore_s3.client import S3Client
-from types_aiobotocore_s3.literals import BucketLocationConstraintType
-
+from typing import Optional, Union, List, TypeVar, Generic, Type
 
 DEFAULT_SERVICE_NAME = "s3"
 
 
 async def is_endpoint_available(endpoint_url: str, timeout: float = 1.0) -> bool:
     """Check if the endpoint is reachable."""
+    import httpx
+
     try:
         httpx.get(endpoint_url, timeout=timeout)
         return True
@@ -122,284 +112,131 @@ class AbstractStorageInfra(ABC):
         pass
 
 
-@dataclass
-class S3StorageInfra(AbstractStorageInfra):
-    """
-    Class to handle asynchronous S3 operations using aioboto3.
+T = TypeVar("T")
 
-    Attributes:
 
-        bucket_name (str): Name of the S3 bucket.
-        endpoint_url (str): S3 endpoint URL.
-        region_name (str): AWS region name.
-        aws_access_key_id (str): AWS access key ID.
-        aws_secret_access_key (str): AWS secret access key.
-        session (aioboto3.Session): aioboto3 session for creating clients.
-    """
+class AbstractFileRepository(Generic[T], ABC):
+    """Generic async repository, persisting Python objects using StorageInfra."""
 
-    bucket_name: str
-    endpoint_url: str
-    aws_access_key_id: str
-    aws_secret_access_key: str
-    region_name: BucketLocationConstraintType
+    def __init__(
+        self,
+        infra_file: AbstractStorageInfra,
+        type_object: Type[T],
+        prefix: str = "",
+        extension: str = "",
+    ) -> None:
+        # Ensure the prefix and extension are properly formatted
+        list_exceptions = []
 
-    session: aioboto3.Session = field(default_factory=aioboto3.Session)
+        if not (prefix := prefix.strip()):
+            e = ValueError("Prefix cannot be empty or just whitespace.")
+            list_exceptions.append(e)
 
-    async def ensure_storage_exists(self) -> None:
-        """Ensure the S3 bucket exists, creating it if necessary."""
-        # Check if provided endpoint URL is valid and accessible
-        await is_endpoint_available(self.endpoint_url)
-
-        if not await self.exists_bucket(self.bucket_name):
-            await self.create_bucket(self.bucket_name)
-
-    @asynccontextmanager
-    async def _get_client(self) -> AsyncIterator[S3Client]:
-        """Async context manager to yield an S3 client."""
-        async with self.session.client(
-            service_name=DEFAULT_SERVICE_NAME,
-            region_name=self.region_name,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            endpoint_url=self.endpoint_url,
-        ) as client:
-            yield client
-
-    async def exists_bucket(self, bucket_name: str) -> bool:
-        """Check if a bucket exists.
-
-        Args:
-            bucket_name: The bucket name to check.
-
-        Returns:
-            True if the bucket exists, False otherwise.
-        """
-        async with self._get_client() as client:
-            try:
-                await client.head_bucket(Bucket=bucket_name)
-                return True
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "404":
-                    return False
-                raise
-
-    async def create_bucket(self, bucket_name: str) -> bool:
-        """Create a new S3 bucket.
-
-        Args:
-            bucket_name: The name of the bucket to create.
-
-        Raises:
-            ClientError: If the bucket could not be created.
-        """
-        async with self._get_client() as client:
-            try:
-                await client.create_bucket(
-                    Bucket=bucket_name,
-                    CreateBucketConfiguration={
-                        "LocationConstraint": self.region_name,
-                    },
-                )
-                return True
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "BucketAlreadyExists":
-                    return False
-                raise
-
-    async def _object_exists(self, client: S3Client, key: str) -> bool:
-        """Check if an object exists in the bucket.
-
-        Args:
-            client: An active S3 client.
-            key: Object key.
-
-        Returns:
-            True if the object exists, False otherwise.
-        """
-        try:
-            await client.head_object(Bucket=self.bucket_name, Key=key)
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
-                return False
-            raise
-
-    async def exists_bytes(self, key: str) -> bool:
-        """Check if an object exists by key.
-
-        Args:
-            key: Object key.
-
-        Returns:
-            True if the object exists, False otherwise.
-        """
-        async with self._get_client() as client:
-            return await self._object_exists(client, key)
-
-    async def get_bytes(self, key: str) -> Optional[bytes]:
-        """Retrieve an object as bytes.
-
-        Args:
-            key: Object key in the bucket.
-
-        Returns:
-            The object content in bytes, or None if not found.
-        """
-        async with self._get_client() as client:
-            try:
-                response = await client.get_object(Bucket=self.bucket_name, Key=key)
-                return await response["Body"].read()
-            except ClientError as e:
-                if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
-                    return None
-                raise
-
-    async def create_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
-        """Create a new object if it doesn't already exist.
-
-        Args:
-            key: Target key in the bucket.
-            data: The content to upload as bytes or BytesIO.
-
-        Returns:
-            True if created, False if the object already exists.
-        """
-        async with self._get_client() as client:
-            if await self._object_exists(client, key):
-                return False
-            await client.put_object(Bucket=self.bucket_name, Key=key, Body=data)
-            return True
-
-    async def update_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
-        """Update an existing object with new data.
-
-        Args:
-            key: Target key in the bucket.
-            data: New content as bytes or BytesIO.
-
-        Returns:
-            True if updated, False if object does not exist.
-        """
-        async with self._get_client() as client:
-            if not await self._object_exists(client, key):
-                return False
-            await client.put_object(Bucket=self.bucket_name, Key=key, Body=data)
-            return True
-
-    async def delete_bytes(self, key: str) -> bool:
-        """Delete an object by key.
-
-        Args:
-            key: Object key to delete.
-
-        Returns:
-            True if deleted, False if object does not exist.
-        """
-        async with self._get_client() as client:
-            if not await self._object_exists(client, key):
-                return False
-            await client.delete_object(Bucket=self.bucket_name, Key=key)
-            return True
-
-    async def list_all(self, prefix: str = "") -> List[str]:
-        """List all objects in the bucket with an optional prefix.
-
-        Args:
-            prefix: Optional prefix to filter objects.
-
-        Returns:
-            List of object keys.
-        """
-        keys = []
-
-        if not prefix.strip():
-            raise ValueError("Prefix cannot be empty or whitespace.")
+        if not (extension := extension.strip()):
+            e = ValueError("Extension cannot be empty or just whitespace.")
+            list_exceptions.append(e)
 
         if not prefix.endswith("/"):
-            prefix += "/"
+            e = ValueError("Prefix must end with '/'.")
+            list_exceptions.append(e)
 
-        async with self._get_client() as client:
-            paginator = client.get_paginator("list_objects_v2")
+        if not extension.startswith("."):
+            e = ValueError("Extension must start with a dot ('.').")
+            list_exceptions.append(e)
 
-            async for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
-                for obj in page.get("Contents", []):
-                    keys.append(obj["Key"])
-            return keys
+        if list_exceptions:
+            raise ExceptionGroup("Invalid StorageInfra repository configuration", list_exceptions)
 
+        self.infra_file = infra_file
+        self.type_object = type_object
+        self.prefix = prefix
+        self.extension = extension
 
-@dataclass
-class LocalStorageInfra(AbstractStorageInfra):
-    """
-    Local filesystem-based implementation of the file infrastructure.
+    @abstractmethod
+    def serialize(self, obj: T) -> bytes:
+        """Convert obj to raw bytes ready for StorageInfra upload."""
 
-    All object keys are interpreted as relative paths under the base directory.
+    @abstractmethod
+    def deserialize(self, payload: bytes) -> T:
+        """Transform raw bytes downloaded from StorageInfra back into an object of type T."""
 
-    Args:
-        base_path: Base directory for file storage.
-    """
+    def _get_key(self, identifier: str) -> str:
+        """Convert an identifier (name) to a key (full path).
 
-    base_path: Path
+        Arguments:
+            identifier (str): The identifier to convert.
 
-    def __init__(self, base_path: Union[str, Path]) -> None:
-        self.base_path = Path(base_path)
-        self.base_path = self.base_path.resolve()
-        self.base_path = self.base_path.absolute()
+        Returns:
+            str: The full key, including prefix and extension.
 
-    def _full_path(self, key: str) -> Path:
-        return self.base_path / key.lstrip("/")
+        Example:
+            >>> class FakeRepository(AbstractFileRepository[str]):
+            ...     def serialize(self, obj: str) -> bytes:
+            ...         return obj.encode('utf-8')
+            ...
+            ...     def deserialize(self, payload: bytes) -> str:
+            ...         return payload.decode('utf-8')
+            ...
+            >>> repo = FakeRepository(s3_client=..., type_object=str, prefix="my/prefix/", extension=".json")
+            ...
+            >>> repo._get_key("my_object")
+            'my/prefix/my_object.json'
 
-    async def ensure_storage_exists(self) -> None:
-        self.base_path.mkdir(parents=True, exist_ok=True)
+            >>> repo._get_key("my_object.json")
+            'my/prefix/my_object.json'
 
-    async def exists_bytes(self, key: str) -> bool:
-        return self._full_path(key).exists()
+            >>> repo._get_key("my/prefix/my_object")
+            'my/prefix/my_object.json'
 
-    async def get_bytes(self, key: str) -> Optional[bytes]:
-        path = self._full_path(key)
-        if not path.exists():
+            >>> repo._get_key("my/prefix/my_object.json")
+            'my/prefix/my_object.json'
+
+        """
+        if identifier.startswith(self.prefix):  # full key provided
+            identifier = identifier[len(self.prefix) :]
+
+        suffix = self.extension if not identifier.endswith(self.extension) else ""
+        return f"{self.prefix}{identifier}{suffix}"
+
+    async def exists(self, identifier: str) -> bool:
+        """Check if an object with the given key exists."""
+        key = self._get_key(identifier)
+        return await self.infra_file.exists_bytes(key)
+
+    async def get(self, identifier: str) -> Optional[T]:
+        """Download and deserialize an object using the given identifier."""
+        key = self._get_key(identifier)
+        payload = await self.infra_file.get_bytes(key)
+
+        if payload is None:
             return None
-        async with aiofiles.open(path, mode="rb") as f:
-            return await f.read()
 
-    async def create_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
-        path = self._full_path(key)
-        if path.exists():
-            return False
-        path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(path, mode="wb") as f:
-            await f.write(data.getvalue() if isinstance(data, BytesIO) else data)
-        return True
+        return self.deserialize(payload)
 
-    async def update_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
-        path = self._full_path(key)
-        if not path.exists():
-            return False
-        async with aiofiles.open(path, mode="wb") as f:
-            await f.write(data.getvalue() if isinstance(data, BytesIO) else data)
-        return True
+    async def create(self, identifier: str, obj: T) -> bool:
+        """Serialize obj and upload it under the given identifier."""
+        key = self._get_key(identifier)
+        data = self.serialize(obj)
+        return await self.infra_file.create_bytes(key, data)
 
-    async def delete_bytes(self, key: str) -> bool:
-        path = self._full_path(key)
-        if not path.exists():
-            return False
-        await asyncio.to_thread(path.unlink)
-        return True
+    async def update(self, identifier: str, obj: T) -> bool:
+        """Serialize obj and update the existing object under the given identifier."""
+        key = self._get_key(identifier)
+        data = self.serialize(obj)
+        return await self.infra_file.update_bytes(key, data)
 
-    async def list_all(self, prefix: str = "") -> List[str]:
-        if not prefix.strip():
-            raise ValueError("Prefix cannot be empty or whitespace.")
+    async def delete(self, identifier: str) -> bool:
+        """Delete an object from identifier."""
+        key = self._get_key(identifier)
+        return await self.infra_file.delete_bytes(key)
 
-        if not prefix.endswith("/"):
-            prefix += "/"
+    async def list(self) -> List[str]:
+        """List all identifiers in the repository."""
+        list_ids = await self.infra_file.list_all(prefix=self.prefix)
 
-        root = self._full_path(prefix)
-        if not root.exists():
-            return []
-
-        list_ids = [
-            f"{path.relative_to(self.base_path)}"
-            for path in root.rglob("*")
-            if path.is_file() and str(path).startswith(str(root))
-        ]
+        # Remove the prefix and extension from the keys
+        slice_pre = len(self.prefix)
+        slice_ext = -len(self.extension)
+        list_ids = [key[slice_pre:slice_ext] for key in list_ids]
 
         return list_ids

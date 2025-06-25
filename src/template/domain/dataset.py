@@ -7,8 +7,7 @@ from loguru import logger
 from torch.utils.data import Dataset as TorchDataset
 
 from template.domain.tokenizer import Tokenizer, CharTokenizer
-from template.infrastructure.storage.adapter import AbstractFileRepository
-from template.infrastructure.storage.base import AbstractStorageInfra
+from template.infrastructure.storage.base import AbstractStorageInfra, AbstractFileRepository
 
 
 def _preprocess(dataset: str) -> list[str]:

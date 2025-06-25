@@ -1,8 +1,14 @@
 from typing import Sequence, Optional
 
-from template.controller.routes.schemas.api_keys import APIKeyRead, APIKeyCreateResponse, APIKeyUpdate, APIKeyCreate
+from template.controller.routes.schemas.api_keys import (
+    APIKeyRead,
+    APIKeyUpdate,
+    APIKeyCreate,
+    DocumentedAPIKeyRead,
+    DocumentedAPIKeyCreateResponse,
+)
 from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException
-from template.infrastructure.database.api_keys import APIKeyRepository, ApiKeyModel
+from template.infrastructure.repositories.api_keys import APIKeyRepository, ApiKeyModel
 
 
 class APIKeyService:
@@ -36,7 +42,7 @@ class APIKeyService:
 
         return key
 
-    async def get(self, key_id: int) -> APIKeyRead:
+    async def get(self, key_id: int) -> DocumentedAPIKeyRead:
         """
         Retrieve an API key by its ID.
 
@@ -50,9 +56,9 @@ class APIKeyService:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        return APIKeyRead.model_validate(key)
+        return DocumentedAPIKeyRead.model_validate(key)
 
-    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[APIKeyRead]:
+    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[DocumentedAPIKeyRead]:
         """
         List API keys with optional pagination and active‐only filtering.
 
@@ -69,9 +75,9 @@ class APIKeyService:
             limit=limit,
             active_only=active_only,
         )
-        return [APIKeyRead.model_validate(k) for k in keys]
+        return [DocumentedAPIKeyRead.model_validate(k) for k in keys]
 
-    async def create(self, data: APIKeyCreate) -> APIKeyCreateResponse:
+    async def create(self, data: APIKeyCreate) -> DocumentedAPIKeyCreateResponse:
         """
         Create and persist a new API key.
 
@@ -91,11 +97,11 @@ class APIKeyService:
         raw_key = key.plain_key
 
         # Build response schema
-        resp = APIKeyCreateResponse.model_validate(key)
+        resp = DocumentedAPIKeyCreateResponse.model_validate(key)
         resp.plain_key = raw_key
         return resp
 
-    async def update(self, id_: int, data: APIKeyUpdate) -> APIKeyRead:
+    async def update(self, id_: int, data: APIKeyUpdate) -> DocumentedAPIKeyRead:
         """
         Update fields of an existing API key.
 
@@ -111,7 +117,7 @@ class APIKeyService:
         """
         key = await self._get_key(id_)
         await self._repo.update(key, data.model_dump())
-        return APIKeyRead.model_validate(key)
+        return DocumentedAPIKeyRead.model_validate(key)
 
     async def activate(self, key_id: int, active: bool) -> APIKeyRead:
         """

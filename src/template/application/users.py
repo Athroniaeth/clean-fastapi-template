@@ -13,7 +13,7 @@ from template.domain.users import (
     PasswordNotProvidedException,
     PasswordInvalidException,
 )
-from template.infrastructure.database.users import UserRepository, UserModel
+from template.infrastructure.repositories.users import UserRepository, UserModel
 
 
 class UserService:

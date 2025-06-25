@@ -5,7 +5,7 @@ from typing import Type, List
 import polars as pl
 
 from template.domain.tokenizer import Tokenizer, CharTokenizer
-from template.infrastructure.storage.tokenizer import TokenizerRepository
+from template.infrastructure.repositories.tokenizer import TokenizerRepository
 
 
 class TokenizerService:

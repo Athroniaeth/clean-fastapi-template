@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import math
 import time
 from typing import Annotated, Sequence
@@ -11,8 +9,8 @@ from fastapi import (
 )
 from fastapi.params import Query
 
-from template.controller.routes.depends import inject_s3
-from template.infrastructure.storage.base import S3StorageInfra
+from template.controller.routes.depends import inject_infra_storage
+
 from template.controller.routes.schemas.ml import (
     DocumentedOutputInference,
     DocumentedMetadataML,
@@ -20,11 +18,14 @@ from template.controller.routes.schemas.ml import (
     MetadataTokenizer,
 )
 from template.application.ml import MLService
-from template.infrastructure.storage.ml import MLRepository
+from template.infrastructure.storage.base import AbstractStorageInfra
 
 
-async def _get_service(s3_client: Annotated[S3StorageInfra, Depends(inject_s3)]) -> MLService:
+async def _get_service(s3_client: Annotated[AbstractStorageInfra, Depends(inject_infra_storage)]) -> MLService:
     """Return a ready-to-use service instance."""
+
+    from template.infrastructure.repositories.ml import MLRepository
+
     repository = MLRepository(s3_client)
     return MLService(repository)
 

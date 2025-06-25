@@ -8,10 +8,10 @@ from fastapi import (
     status,
     Query,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.controller.routes.depends import inject_db
-from template.infrastructure.database.api_keys import APIKeyRepository
+from template.controller.routes.depends import inject_infra_database
+from template.infrastructure.database.base import AbstractDatabaseInfra
+from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.application.api_keys import APIKeyService
 from template.controller.routes.schemas.api_keys import (
     APIKeyCreate,
@@ -21,9 +21,9 @@ from template.controller.routes.schemas.api_keys import (
 )
 
 
-async def _get_service(session: Annotated[AsyncSession, Depends(inject_db)]) -> APIKeyService:
+async def _get_service(infra: Annotated[AbstractDatabaseInfra, Depends(inject_infra_database)]) -> APIKeyService:
     """Return a ready-to-use service instance."""
-    repository = APIKeyRepository(session)
+    repository = APIKeyRepository(infra)
     return APIKeyService(repository)
 
 

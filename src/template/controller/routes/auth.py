@@ -5,9 +5,10 @@ from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
+from template.controller.routes.depends import inject_infra_storage
 from template.core.exceptions import APIException
-from template.infrastructure.database.adapter import SQLiteDatabaseInfra
-from template.infrastructure.database.users import UserRepository
+from template.infrastructure.database.base import AbstractDatabaseInfra
+from template.infrastructure.repositories.users import UserRepository
 from template.application.users import UserService
 from template.controller.routes.schemas.users import UserReadResponse, UserCreateSchema
 from template.domain.users import UserNotFoundException
@@ -111,11 +112,10 @@ class AuthService:
         return user
 
 
-def get_user_service() -> UserService:
+def get_user_service(infra: AbstractDatabaseInfra = Depends(inject_infra_storage)) -> UserService:
     """
     Provide a new UserService instance.
     """
-    infra = SQLiteDatabaseInfra()
     repo = UserRepository(infra)
     return UserService(repo)
 

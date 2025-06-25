@@ -2,11 +2,13 @@ from dataclasses import dataclass, fields
 from typing import Mapping
 
 from fastapi import FastAPI as _FastAPI
-from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request as _Request
 
 from template.core.constants import Lifespan
+
+from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.storage.base import AbstractStorageInfra
+from template.settings import Settings
 
 
 @dataclass
@@ -25,14 +27,19 @@ class State(Mapping):
         title (str): The title of the application.
         version (str): The version of the application.
         description (str): The description of the application.
-        async_session (sessionmaker[AsyncSession]): The database session for the application.
+
+        settings (Settings): The settings of the application.
+        infra_storage (AbstractStorageInfra): The storage infrastructure.
+        infra_database (AbstractDatabaseInfra): The database infrastructure.
     """
 
     title: str
     version: str
     description: str
-    async_session: sessionmaker
+
+    settings: Settings
     infra_storage: AbstractStorageInfra
+    infra_database: AbstractDatabaseInfra
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -51,8 +58,9 @@ class FastAPI(_FastAPI):
     title: str
     version: str
     description: str
-    lifespan: Lifespan
+
     state: State
+    lifespan: Lifespan
 
 
 class Request(_Request):

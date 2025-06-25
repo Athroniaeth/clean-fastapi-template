@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, Form
 
+
 from template.controller.routes.auth import get_current_user, AuthService, get_auth_service
+
 from template.controller.routes.schemas.users import UserReadResponse, UserCreateSchema
+
 from template.controller.routes.v1.api_keys import keys_router
+
 from template.controller.routes.v1.ml import models_router
+
 from template.core.improve import Request
 
 index_router = APIRouter(tags=["Utils"])

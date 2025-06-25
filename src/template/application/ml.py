@@ -1,27 +1,22 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import polars
-import torch
-from torch import nn
-from torch.optim.lr_scheduler import LinearLR
-from torchmetrics.classification import MulticlassAccuracy
 
-from template.core.ml import split_dataset, train_model
-from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
-from template.domain.ml import NLPModel, BengioMLP
-from template.domain.tokenizer import Tokenizer
-from template.infrastructure.storage.ml import MLRepository
+if TYPE_CHECKING:
+    from template.domain.tokenizer import Tokenizer
+    from template.domain.ml import NLPModel
+    from template.infrastructure.repositories.ml import MLRepository
 
 
 class MLService:
     """Service for managing datasets (preprocessed raw data)."""
 
-    def __init__(self, repo: MLRepository):
+    def __init__(self, repo: "MLRepository"):
         self.repo = repo
 
-    async def get(self, identifier: str) -> NLPModel:
+    async def get(self, identifier: str) -> "NLPModel":
         """
         Get the path of a dataset by its identifier.
 
@@ -42,7 +37,7 @@ class MLService:
         self,
         identifier: str,
         dataframe: polars.DataFrame,
-        tokenizer: Tokenizer,
+        tokenizer: "Tokenizer",
         device: str = "cuda",
         batch_size: int = 256,
         ratio_tests: float = 0.1,
@@ -55,7 +50,7 @@ class MLService:
         scheduler_start_factor: float = 1.0,
         scheduler_end_factor: float = 1e-4,
         scheduler_total_iters: int = 0,
-    ) -> NLPModel:
+    ) -> "NLPModel":
         """
         Create a dataset from the raw data.
 
@@ -79,6 +74,15 @@ class MLService:
         Returns:
             Tokenizer: The created dataset (polars DataFrame).
         """
+
+        import torch
+        from torch import nn
+        from torch.optim.lr_scheduler import LinearLR
+        from torchmetrics.classification import MulticlassAccuracy
+        from template.core.ml import split_dataset, train_model
+        from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
+        from template.domain.ml import BengioMLP
+
         # Fast failure if the identifier already exists (prevents unnecessary processing)
         if await self.repo.exists(identifier):
             raise FileExistsError(f"Tokenizer '{identifier}' already exists.")

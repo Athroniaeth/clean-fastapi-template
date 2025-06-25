@@ -18,7 +18,7 @@ cli_ml = AsyncTyper(
 async def get_service_ml():  # noqa
     """Get the tokenizer service."""
 
-    from template.infrastructure.storage.ml import MLRepository
+    from template.infrastructure.repositories.ml import MLRepository
     from template.application.ml import MLService
     from template.settings import get_settings
 
