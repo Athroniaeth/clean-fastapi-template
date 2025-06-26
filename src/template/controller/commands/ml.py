@@ -28,14 +28,14 @@ async def get_service_ml():  # noqa
 
     infra_client = get_storage_infra(settings)
     repo = MLRepository(infra_client=infra_client)
-    return MLService(repo=repo)
+    return MLService(repo_ml=repo)
 
 
-@cli_ml.command(name="create")
-async def create_model(
-    model_id: str = typer.Argument("model", help="Model identifier to create"),
-    dataframe: str = typer.Option("villes", "--dataset", help="Dataset identifier to use to create the model"),
-    tokenizer: str = typer.Option("tokenizer", "--tokenizer", help="Tokenizer identifier to use to create the model"),
+@cli_ml.command(name="train")
+async def train_model(
+    model_id: str = typer.Argument("model", help="Model identifier to train"),
+    dataframe: str = typer.Option("villes", "--dataset", help="Dataset identifier to use to train the model"),
+    tokenizer: str = typer.Option("tokenizer", "--tokenizer", help="Tokenizer identifier to use to train the model"),
     device: str = "cuda",
     batch_size: int = 256,
     ratio_tests: float = 0.1,
@@ -72,13 +72,38 @@ async def create_model(
         "scheduler_end_factor": scheduler_end_factor,
         "scheduler_total_iters": scheduler_total_iters,
     }
-    model = await service_ml.create(
-        identifier=model_id,
+    model = await service_ml.train(
+        model_id=model_id,
         dataframe=dataframe,
         tokenizer=tokenizer,
         **train_config,
     )
     typer.echo(f"Model '{model_id}' saved (vocab size = {len(model.tokenizer.vocab)}).")
+
+
+@cli_ml.command(name="create")
+async def create_model(
+    model_id: str = typer.Argument("model", help="Model identifier to train"),
+    tokenizer_id: str = typer.Option("tokenizer", "--tokenizer", help="Tokenizer identifier to use to train the model"),
+    d_model: int = 256,
+    d_hidden: int = 256,
+    n_context: int = 10,
+):
+    """Delete a model from the repository."""
+
+    service_ml = await get_service_ml()
+    service_tokenizer = await get_service_tokenizer()
+
+    tokenizer_id = await service_tokenizer.get(identifier=tokenizer_id)
+
+    await service_ml.create(
+        model_id=model_id,
+        tokenizer=tokenizer_id,
+        d_model=d_model,
+        d_hidden=d_hidden,
+        n_context=n_context,
+    )
+    typer.echo(f"Model '{model_id}' deleted successfully.")
 
 
 @cli_ml.command(name="delete")
@@ -113,6 +138,7 @@ async def generate_text(
     device: str = typer.Option("cuda", "--device", help="Device to use for generation"),
     temperature: float = typer.Option(1.0, "--temperature", help="Temperature for sampling"),
     top_p: float = typer.Option(1.0, "--top-p", help="Nucleus sampling threshold"),
+    n: int = typer.Option(10, "--n", help="Number of samples to generate (deprecated, use --num-samples)"),
 ):
     """Generate text from a model."""
     service_ml = await get_service_ml()
@@ -122,7 +148,7 @@ async def generate_text(
     model.eval()
 
     samples = set()
-    for _ in tqdm(range(200), desc="Generating"):
+    for _ in tqdm(range(n), desc="Generating"):
         result = model.generate_city_name(
             start_tokens=start_text,
             max_length=max_length,

@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 class MLService:
     """Service for managing datasets (preprocessed raw data)."""
 
-    def __init__(self, repo: "MLRepository"):
-        self.repo = repo
+    def __init__(self, repo_ml: "MLRepository"):
+        self.repo = repo_ml
 
     async def get(self, identifier: str) -> "NLPModel":
         """
@@ -35,7 +35,46 @@ class MLService:
 
     async def create(
         self,
-        identifier: str,
+        model_id: str,
+        tokenizer: "Tokenizer",
+        d_model: int = 256,
+        d_hidden: int = 256,
+        n_context: int = 10,
+    ) -> "NLPModel":
+        """
+        Create a dataset from the raw data.
+
+        Args:
+            model_id (str): The identifier for the dataset (file name without extension).
+            tokenizer (Tokenizer): The tokenizer to use for the dataset.
+            d_model (int): The dimension of the model (default: 256).
+            d_hidden (int): The dimension of the hidden layer (default: 256).
+            n_context (int): The number of context tokens (default: 10).
+
+        Returns:
+            Tokenizer: The created dataset (polars DataFrame).
+        """
+        from template.domain.ml import BengioMLP
+
+        # Fast failure if the identifier already exists (prevents unnecessary processing)
+        if await self.repo.exists(model_id):
+            raise FileExistsError(f"Tokenizer '{model_id}' already exists.")
+
+        model = BengioMLP(
+            d_model=d_model,
+            d_hidden=d_hidden,
+            n_context=n_context,
+            tokenizer=tokenizer,
+        )
+
+        await self.repo.create(model_id, model)
+
+        # Always move back to CPU before returning (safer for pickling)
+        return model.cpu()
+
+    async def train(
+        self,
+        model_id: str,
         dataframe: polars.DataFrame,
         tokenizer: "Tokenizer",
         device: str = "cuda",
@@ -55,7 +94,7 @@ class MLService:
         Create a dataset from the raw data.
 
         Args:
-            identifier (str): The identifier for the dataset (file name without extension).
+            model_id (str): The identifier for the dataset (file name without extension).
             dataframe (polars.DataFrame): The raw data as a polars DataFrame.
             tokenizer (Tokenizer): The tokenizer to use for the dataset.
             device (str): The device to use for training (default: "cuda").
@@ -81,11 +120,12 @@ class MLService:
         from torchmetrics.classification import MulticlassAccuracy
         from template.core.ml import split_dataset, train_model
         from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
-        from template.domain.ml import BengioMLP
+
+        model = await self.get(model_id)
 
         # Fast failure if the identifier already exists (prevents unnecessary processing)
-        if await self.repo.exists(identifier):
-            raise FileExistsError(f"Tokenizer '{identifier}' already exists.")
+        if await self.repo.exists(model_id):
+            raise FileExistsError(f"Tokenizer '{model_id}' already exists.")
 
         sentences = dataframe[DEFAULT_COLUMN_NAME].to_list()
 
@@ -100,12 +140,6 @@ class MLService:
             ratio_tests=ratio_tests,
             ratio_validation=ratio_validation,
         )
-        model = BengioMLP(
-            d_model=d_model,
-            d_hidden=d_hidden,
-            n_context=n_context,
-            tokenizer=tokenizer,
-        ).to(device)
 
         metric = MulticlassAccuracy(num_classes=len(tokenizer.vocab))
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -127,7 +161,7 @@ class MLService:
             type_scheduler=LinearLR,
         )
 
-        await self.repo.create(identifier, model)
+        await self.repo.create(model_id, model)
 
         # Always move back to CPU before returning (safer for pickling)
         return model.cpu()
