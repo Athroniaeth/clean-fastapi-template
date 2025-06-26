@@ -12,7 +12,7 @@ from template.core.improve import State, FastAPI
 from template import get_version
 from template.core.exceptions import APIException
 
-from template.controller.routes.v1.router import index_router, api_router
+from template.api.routes.v1.router import index_router, api_router
 
 from template.infrastructure.storage.base import AbstractStorageInfra
 from template.infrastructure.database.base import AbstractDatabaseInfra

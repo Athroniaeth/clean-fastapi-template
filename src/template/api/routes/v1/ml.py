@@ -9,9 +9,9 @@ from fastapi import (
 )
 from fastapi.params import Query
 
-from template.controller.routes.depends import inject_infra_storage
+from template.api.routes.depends import inject_infra_storage
 
-from template.controller.routes.schemas.ml import (
+from template.api.routes.schemas.ml import (
     DocumentedOutputInference,
     DocumentedMetadataML,
     DocumentedInputInference,

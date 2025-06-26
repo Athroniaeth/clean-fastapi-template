@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from template.controller.commands.api_keys import cli_keys
+from template.cli.commands.api_keys import cli_keys
 
 # Shared runner used in every test.
 runner = CliRunner()

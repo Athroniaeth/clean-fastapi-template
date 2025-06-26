@@ -12,7 +12,7 @@ import pytest
 from fastapi.openapi.models import APIKey
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from template.controller.routes.schemas.api_keys import APIKeyCreate, APIKeyUpdate
+from template.api.routes.schemas.api_keys import APIKeyCreate, APIKeyUpdate
 from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.application.api_keys import APIKeyService
 from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException

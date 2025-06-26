@@ -5,11 +5,11 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from template.controller.commands.api_keys import cli_keys
-from template.controller.commands.dataset import cli_dataset
-from template.controller.commands.ml import cli_ml
-from template.controller.commands.tokenizer import cli_tokenizer
-from template.controller.commands.users import cli_users
+from template.cli.commands.api_keys import cli_keys
+from template.cli.commands.dataset import cli_dataset
+from template.cli.commands.ml import cli_ml
+from template.cli.commands.tokenizer import cli_tokenizer
+from template.cli.commands.users import cli_users
 from template.core.cli import AsyncTyper
 from template.core.constants import Level
 
