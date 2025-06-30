@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from template.api.routes.schemas.users import (
+from template.interface.api.routes.schemas.users import (
     UserReadResponseSchema,
     UserCreateSchema,
     UserReadResponse,

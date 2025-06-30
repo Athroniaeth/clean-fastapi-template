@@ -5,11 +5,11 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from template.cli.commands.api_keys import cli_keys
-from template.cli.commands.dataset import cli_dataset
-from template.cli.commands.ml import cli_ml
-from template.cli.commands.tokenizer import cli_tokenizer
-from template.cli.commands.users import cli_users
+from template.interface.cli.commands.api_keys import cli_keys
+from template.interface.cli.commands.dataset import cli_dataset
+from template.interface.cli.commands.ml import cli_ml
+from template.interface.cli.commands.tokenizer import cli_tokenizer
+from template.interface.cli.commands.users import cli_users
 from template.core.cli import AsyncTyper
 from template.core.constants import Level
 
@@ -101,7 +101,7 @@ def callback(level: LoggingLevel = Level.INFO):
 
 @cli.command()
 def dev(
-    source: str = "template.app:factory_app",
+    source: str = "template.interface.api.app:factory_app",
     host: str = typer.Option("localhost", envvar="HOST"),
     port: int = typer.Option(8000, envvar="PORT"),
     workers: Optional[int] = typer.Option(None, envvar="WORKERS"),

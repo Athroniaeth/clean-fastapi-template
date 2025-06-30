@@ -6,7 +6,7 @@ from loguru import logger
 
 def main():
     """Entry point for the application."""
-    from template.cli import app
+    from template.interface.cli.app import cli
 
     # Disable useless warnings
     # https://github.com/pyca/bcrypt/issues/684#issuecomment-1858400267

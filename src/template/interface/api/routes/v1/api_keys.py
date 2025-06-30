@@ -9,11 +9,11 @@ from fastapi import (
     Query,
 )
 
-from template.api.routes.depends import inject_infra_database
+from template.interface.api.routes.depends import inject_infra_database
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.application.api_keys import APIKeyService
-from template.api.routes.schemas.api_keys import (
+from template.interface.api.routes.schemas.api_keys import (
     APIKeyCreate,
     DocumentedAPIKeyRead,
     APIKeyUpdate,

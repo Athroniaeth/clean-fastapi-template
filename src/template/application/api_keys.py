@@ -1,6 +1,6 @@
 from typing import Sequence, Optional
 
-from template.api.routes.schemas.api_keys import (
+from template.interface.api.routes.schemas.api_keys import (
     APIKeyRead,
     APIKeyUpdate,
     APIKeyCreate,

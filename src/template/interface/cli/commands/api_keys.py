@@ -46,7 +46,7 @@ async def create_key(
         is_active (bool): Whether the key is active upon creation.
     """
 
-    from template.api.routes.schemas.api_keys import APIKeyCreate
+    from template.interface.api.routes.schemas.api_keys import APIKeyCreate
 
     async with get_service() as service:
         schema = APIKeyCreate(name=name, description=description, is_active=is_active)
