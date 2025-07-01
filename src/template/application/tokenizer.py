@@ -76,4 +76,4 @@ class TokenizerService:
         Returns:
             list[str]: A list of dataset identifiers (file names without extension).
         """
-        return await self.repo.list()
+        return await self.repo.list_ids()

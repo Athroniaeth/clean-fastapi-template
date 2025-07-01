@@ -59,8 +59,6 @@ class Tokenizer(ABC):
 
 @dataclass
 class CharTokenizer(Tokenizer):
-    """A simple character-level tokenizer."""
-
     @classmethod
     def from_sentences(cls, sentences: Sequence[str]) -> Self:
         """Initialize the tokenizer with a text."""

@@ -61,10 +61,10 @@ class AbstractDatabaseInfra(ABC):
     def __init__(
         self,
         database_url: str,
+        base: Type[DeclarativeBase],
         echo: bool = False,
         future: bool = True,
         expire_on_commit: bool = False,
-        base: Type[DeclarativeBase] = Base,
     ):
         self._base = base
         self._engine = create_async_engine(database_url, echo=echo, future=future)

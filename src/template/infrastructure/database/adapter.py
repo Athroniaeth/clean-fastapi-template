@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Any, Dict, Generic, Optional, Sequence, Type, TypeVar, Protocol, Union
 
 from sqlalchemy import delete, select, update, Column, UUID
+from sqlalchemy.orm import DeclarativeBase
 
 from template.infrastructure.database.base import AbstractDatabaseInfra
 
@@ -121,12 +122,18 @@ class PostgresDatabaseInfra(AbstractDatabaseInfra):
 
     def __init__(
         self,
-        database_url: str = "postgresql+asyncpg://user:password@localhost/dbname",
+        base: Type[DeclarativeBase],
         echo: bool = False,
         future: bool = True,
         expire_on_commit: bool = False,
     ):
-        super().__init__(database_url, echo, future, expire_on_commit)
+        super().__init__(
+            "postgresql+asyncpg://user:password@localhost/dbname",
+            base=base,
+            echo=echo,
+            future=future,
+            expire_on_commit=expire_on_commit,
+        )
 
 
 class SQLiteDatabaseInfra(AbstractDatabaseInfra):
@@ -134,12 +141,18 @@ class SQLiteDatabaseInfra(AbstractDatabaseInfra):
 
     def __init__(
         self,
-        database_url: str = "sqlite+aiosqlite:///./test.db",
+        base: Type[DeclarativeBase],
         echo: bool = False,
         future: bool = True,
         expire_on_commit: bool = False,
     ):
-        super().__init__(database_url, echo, future, expire_on_commit)
+        super().__init__(
+            "sqlite+aiosqlite:///./test.db",
+            base=base,
+            echo=echo,
+            future=future,
+            expire_on_commit=expire_on_commit,
+        )
 
 
 class InMemorySQLiteDatabaseInfra(AbstractDatabaseInfra):
@@ -147,9 +160,15 @@ class InMemorySQLiteDatabaseInfra(AbstractDatabaseInfra):
 
     def __init__(
         self,
-        database_url: str = "sqlite+aiosqlite:///:memory:",
+        base: Type[DeclarativeBase],
         echo: bool = False,
         future: bool = True,
         expire_on_commit: bool = False,
     ):
-        super().__init__(database_url, echo, future, expire_on_commit)
+        super().__init__(
+            "sqlite+aiosqlite:///:memory:",
+            base=base,
+            echo=echo,
+            future=future,
+            expire_on_commit=expire_on_commit,
+        )

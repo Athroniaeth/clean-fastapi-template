@@ -83,12 +83,11 @@ class S3StorageInfra(AbstractStorageInfra):
             ClientError: If the bucket could not be created.
         """
         async with self._get_client() as client:
+            config = {"LocationConstraint": self.region_name}
             try:
                 await client.create_bucket(
                     Bucket=bucket_name,
-                    CreateBucketConfiguration={
-                        "LocationConstraint": self.region_name,
-                    },
+                    CreateBucketConfiguration=config,
                 )
                 return True
             except ClientError as e:
@@ -191,7 +190,7 @@ class S3StorageInfra(AbstractStorageInfra):
             await client.delete_object(Bucket=self.bucket_name, Key=key)
             return True
 
-    async def list_all(self, prefix: str = "") -> List[str]:
+    async def list_ids(self, prefix: str = "") -> List[str]:
         """List all objects in the bucket with an optional prefix.
 
         Args:
@@ -215,3 +214,33 @@ class S3StorageInfra(AbstractStorageInfra):
                 for obj in page.get("Contents", []):
                     keys.append(obj["Key"])
             return keys
+
+    async def list_bytes(self, prefix: str = "") -> List[bytes]:
+        """List all objects in the bucket and return their content as bytes.
+
+        Args:
+            prefix: Optional prefix to filter objects.
+
+        Returns:
+            List of object contents in bytes.
+        """
+        contents = []
+
+        if not prefix.strip():
+            raise ValueError("Prefix cannot be empty or whitespace.")
+
+        if not prefix.endswith("/"):
+            prefix += "/"
+
+        async with self._get_client() as client:
+            paginator = client.get_paginator("list_objects_v2")
+
+            async for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
+                for obj in page.get("Contents", []):
+                    response = await client.get_object(
+                        Bucket=self.bucket_name,
+                        Key=obj["Key"],
+                    )
+                    content = await response["Body"].read()
+                    contents.append(content)
+            return contents

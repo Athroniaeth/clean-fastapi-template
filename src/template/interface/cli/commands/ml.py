@@ -73,7 +73,7 @@ async def train_model(
         "scheduler_total_iters": scheduler_total_iters,
     }
     model = await service_ml.train(
-        model_id=model_id,
+        id_=model_id,
         dataframe=dataframe,
         tokenizer=tokenizer,
         **train_config,
@@ -111,7 +111,7 @@ async def delete_model(identifier: str = typer.Argument(..., help="Model identif
     """Delete a model from the repository."""
 
     service_ml = await get_service_ml()
-    await service_ml.delete(identifier=identifier)
+    await service_ml.delete(id_=identifier)
     typer.echo(f"Model '{identifier}' deleted successfully.")
 
 

@@ -103,7 +103,7 @@ class LocalStorageInfra(AbstractStorageInfra):
         await asyncio.to_thread(path.unlink)
         return True
 
-    async def list_all(self, prefix: str = "") -> List[str]:
+    async def list_ids(self, prefix: str = "") -> List[str]:
         if not prefix.strip():
             raise ValueError("Prefix cannot be empty or whitespace.")
 
@@ -121,3 +121,76 @@ class LocalStorageInfra(AbstractStorageInfra):
         ]
 
         return list_ids
+
+    async def list_bytes(self, prefix: str = "") -> List[bytes]:
+        if not prefix.strip():
+            raise ValueError("Prefix cannot be empty or whitespace.")
+
+        if not prefix.endswith("/"):
+            prefix += "/"
+
+        root = self._full_path(prefix)
+        if not root.exists():
+            return []
+
+        list_bytes = []
+        for path in root.rglob("*"):
+            if path.is_file() and str(path).startswith(str(root)):
+                async with aiofiles.open(path, mode="rb") as f:
+                    content = await f.read()
+                    list_bytes.append(content)
+
+        return list_bytes
+
+
+class InMemoryStorageInfra(AbstractStorageInfra):
+    """
+    In-memory implementation of the file infrastructure.
+
+    This is useful for testing or temporary storage where persistence is not required.
+    """
+
+    def __init__(self) -> None:
+        self.storage: dict[str, bytes] = {}
+
+    async def ensure_storage_exists(self) -> None:
+        pass  # No action needed for in-memory storage
+
+    async def exists_bytes(self, key: str) -> bool:
+        return key in self.storage
+
+    async def get_bytes(self, key: str) -> Optional[bytes]:
+        return self.storage.get(key)
+
+    async def create_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        if key in self.storage:
+            return False
+
+        self.storage[key] = data.getvalue() if isinstance(data, BytesIO) else data
+        return True
+
+    async def update_bytes(self, key: str, data: Union[bytes, BytesIO]) -> bool:
+        if key not in self.storage:
+            return False
+
+        self.storage[key] = data.getvalue() if isinstance(data, BytesIO) else data
+        return True
+
+    async def delete_bytes(self, key: str) -> bool:
+        if key not in self.storage:
+            return False
+
+        del self.storage[key]
+        return True
+
+    async def list_ids(self, prefix: str = "") -> List[str]:
+        if not prefix.strip():
+            raise ValueError("Prefix cannot be empty or whitespace.")
+
+        return [key for key in self.storage.keys() if key.startswith(prefix)]
+
+    async def list_bytes(self, prefix: str = "") -> List[bytes]:
+        if not prefix.strip():
+            raise ValueError("Prefix cannot be empty or whitespace.")
+
+        return [self.storage[key] for key in self.storage.keys() if key.startswith(prefix)]

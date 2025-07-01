@@ -1,109 +1,120 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
+from datetime import datetime
+from typing import List, Type
 
 import polars
+from template.domain.ml import BengioMLP, Model
 
-if TYPE_CHECKING:
-    from template.domain.tokenizer import Tokenizer
-    from template.domain.ml import NLPModel
-    from template.infrastructure.repositories.ml import MLRepository
+import torch
+from torch import nn
+from torch.optim.lr_scheduler import LinearLR
+from torchmetrics.classification import MulticlassAccuracy
+from template.core.ml import split_dataset, train_model
+from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
+from template.domain.tokenizer import Tokenizer
+from template.domain.ml import MLMeta
+from template.infrastructure.repositories.ml import MLMetaRepository, AbstractModelBlob, MLBlobRepository
 
 
 class MLService:
     """Service for managing datasets (preprocessed raw data)."""
 
-    def __init__(self, repo_ml: "MLRepository"):
+    def __init__(self, repo_ml: MLMetaRepository, blob_ml: MLBlobRepository):
         self.repo = repo_ml
+        self.blob = blob_ml
 
-    async def get(self, identifier: str) -> "NLPModel":
+    async def get(self, id_: str) -> Model:
         """
         Get the path of a dataset by its identifier.
 
         Args:
-            identifier (str): The identifier of the dataset.
+            id_ (str): The identifier of the dataset.
 
         Returns:
             Path: The path of the dataset.
         """
-        ml = await self.repo.get(identifier)
+        meta = await self.repo.get(id_)
 
-        if ml is None:
-            raise FileNotFoundError(f"ML Model '{identifier}' does not exist.")
+        if meta is None:
+            raise Exception(f"Model '{id_}' does not exist.")
 
-        return ml
+        blob = await self.blob.get(id_)
+
+        if blob is None:
+            raise FileNotFoundError(f"Integrity error: Model '{id_}' exists in metadata but not in blob storage.")
+
+        return Model(meta=meta, blob=blob)
 
     async def create(
         self,
-        model_id: str,
-        tokenizer: "Tokenizer",
-        d_model: int = 256,
-        d_hidden: int = 256,
-        n_context: int = 10,
-    ) -> "NLPModel":
+        id_: str,
+        version: str,
+        d_model: int,
+        d_hidden: int,
+        n_context: int,
+        tokenizer: Tokenizer,
+        model: Type[AbstractModelBlob] = BengioMLP,
+    ) -> Model:
         """
         Create a dataset from the raw data.
 
         Args:
-            model_id (str): The identifier for the dataset (file name without extension).
+            id_ (str): The identifier for the dataset (file name without extension).
+            version (str): The version of the dataset.
+            d_model (int): The dimension of the model.
+            d_hidden (int): The dimension of the hidden layer.
+            n_context (int): The context size for the model.
             tokenizer (Tokenizer): The tokenizer to use for the dataset.
-            d_model (int): The dimension of the model (default: 256).
-            d_hidden (int): The dimension of the hidden layer (default: 256).
-            n_context (int): The number of context tokens (default: 10).
+            model (Type[AbstractModelBlob]): The model class to instantiate (default: BengioMLP).
 
         Returns:
             Tokenizer: The created dataset (polars DataFrame).
         """
-        from template.domain.ml import BengioMLP
 
-        # Fast failure if the identifier already exists (prevents unnecessary processing)
-        if await self.repo.exists(model_id):
-            raise FileExistsError(f"Tokenizer '{model_id}' already exists.")
-
-        model = BengioMLP(
+        meta = MLMeta(
+            id_=id_,
+            version=version,
+            created_at=datetime.now(),
+        )
+        blob = model(
             d_model=d_model,
             d_hidden=d_hidden,
             n_context=n_context,
             tokenizer=tokenizer,
         )
 
-        await self.repo.create(model_id, model)
-
-        # Always move back to CPU before returning (safer for pickling)
-        return model.cpu()
+        await self.blob.create(id_, blob)
+        await self.repo.create(meta)
+        return Model(
+            meta=meta,
+            blob=blob,
+        )
 
     async def train(
         self,
-        model_id: str,
+        id_: str,
         dataframe: polars.DataFrame,
-        tokenizer: "Tokenizer",
         device: str = "cuda",
         batch_size: int = 256,
         ratio_tests: float = 0.1,
         ratio_validation: float = 0.1,
-        d_model: int = 256,
-        d_hidden: int = 256,
-        n_context: int = 10,
         lr: float = 1e-3,
         num_epochs: int = 1,
         scheduler_start_factor: float = 1.0,
         scheduler_end_factor: float = 1e-4,
         scheduler_total_iters: int = 0,
-    ) -> "NLPModel":
+    ) -> Model:
         """
         Create a dataset from the raw data.
 
         Args:
-            model_id (str): The identifier for the dataset (file name without extension).
+            id_ (str): The identifier for the dataset (file name without extension).
             dataframe (polars.DataFrame): The raw data as a polars DataFrame.
-            tokenizer (Tokenizer): The tokenizer to use for the dataset.
             device (str): The device to use for training (default: "cuda").
             batch_size (int): The batch size for training (default: 256).
             ratio_tests (float): The ratio of the dataset to use for testing (default: 0.1).
             ratio_validation (float): The ratio of the dataset to use for validation (default: 0.1).
-            d_model (int): The dimension of the model (default: 256).
-            d_hidden (int): The dimension of the hidden layer (default: 256).
-            n_context (int): The number of context tokens (default: 10).
             lr (float): The learning rate for the optimizer (default: 1e-3).
             num_epochs (int): The number of epochs to train the model (default: 1).
             scheduler_start_factor (float): The starting factor for the learning rate scheduler (default: 1.0).
@@ -113,19 +124,12 @@ class MLService:
         Returns:
             Tokenizer: The created dataset (polars DataFrame).
         """
-
-        import torch
-        from torch import nn
-        from torch.optim.lr_scheduler import LinearLR
-        from torchmetrics.classification import MulticlassAccuracy
-        from template.core.ml import split_dataset, train_model
-        from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
-
-        model = await self.get(model_id)
-
-        # Fast failure if the identifier already exists (prevents unnecessary processing)
-        if await self.repo.exists(model_id):
-            raise FileExistsError(f"Tokenizer '{model_id}' already exists.")
+        model = await self.get(id_)
+        meta, blob, tokenizer = (
+            model.meta,
+            model.blob,
+            model.blob.tokenizer,
+        )
 
         sentences = dataframe[DEFAULT_COLUMN_NAME].to_list()
 
@@ -142,11 +146,11 @@ class MLService:
         )
 
         metric = MulticlassAccuracy(num_classes=len(tokenizer.vocab))
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(blob.parameters(), lr=lr)
         criterion = nn.CrossEntropyLoss()
 
         train_model(
-            model=model,
+            model=blob,
             train_loader=train_loader,
             test_loader=test_loader,
             validation_loader=val_loader,
@@ -160,27 +164,42 @@ class MLService:
             total_iters=scheduler_total_iters,
             type_scheduler=LinearLR,
         )
+        # Ensure the model is on CPU before saving
+        blob = blob.cpu()
 
-        await self.repo.create(model_id, model)
+        await self.blob.update(id_, blob)
+        await self.repo.update(meta)
+        return Model(
+            meta=meta,
+            blob=blob,
+        )
 
-        # Always move back to CPU before returning (safer for pickling)
-        return model.cpu()
-
-    async def delete(self, identifier: str) -> None:
+    async def delete(self, id_: str) -> None:
         """
         Delete a dataset by its identifier.
 
         Args:
-            identifier (str): The identifier of the dataset.
+            id_ (int): The identifier of the dataset.
         """
-        if not await self.repo.delete(identifier):
-            raise FileNotFoundError(f"Tokenizer '{identifier}' does not exist.")
+        # Check existence and integrity before deletion
+        await self.get(id_)
+        await self.blob.delete(id_)
+        await self.repo.delete(id_)
 
-    async def list(self) -> List[str]:
+    async def list(self) -> List[Model]:
         """
         List all datasets in the repository.
 
         Returns:
             list[str]: A list of dataset identifiers (file names without extension).
         """
-        return await self.repo.list()
+        list_model = []
+        generator = zip(
+            await self.repo.list_all(),
+            await self.blob.list_all(),
+        )
+        for meta, blob in generator:
+            model = Model(meta=meta, blob=blob)
+            list_model.append(model)
+
+        return list_model

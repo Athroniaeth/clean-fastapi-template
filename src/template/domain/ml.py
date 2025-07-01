@@ -1,22 +1,45 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
 
 import torch
+from pydantic import BaseModel, Field
 from torch import nn
 from torch.nn import functional as F
 
 from template.domain.tokenizer import Tokenizer
 
 
-class NLPModel(ABC, nn.Module):
+class MLMeta(BaseModel):
+    """Metadata for NLP models
+
+    Attributes:
+        id_ (UUID): Unique identifier for the model.
+        version (str): Version of the model.
+        created_at (datetime): Timestamp when the model was created.
+    """
+
+    id_: str = Field(..., description="Unique identifier (name) for the model")
+    version: str = Field("1.0.0", description="Version of the model")
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+class AbstractModelBlob(ABC, nn.Module):
     """
     Base class for NLP models. All models should inherit from this class.
     It provides a common interface and properties for all NLP models.
+
+    Attributes:
+        tokenizer (Tokenizer): Tokenizer instance for handling text data.
     """
 
     def __init__(
         self,
+        d_model: int,
+        d_hidden: int,
+        n_context: int,
         tokenizer: Tokenizer,
         *args,
         **kwargs,
@@ -28,6 +51,9 @@ class NLPModel(ABC, nn.Module):
             tokenizer (Tokenizer): Tokenizer instance for handling text data.
         """
         super().__init__()
+        self.d_model = d_model
+        self.d_hidden = d_hidden
+        self.n_context = n_context
         self.tokenizer = tokenizer
 
     @property
@@ -105,7 +131,7 @@ class NLPModel(ABC, nn.Module):
         return "".join(generated_chars)
 
 
-class BengioMLP(NLPModel):
+class BengioMLP(AbstractModelBlob):
     def __init__(
         self,
         d_model: int,
@@ -113,7 +139,12 @@ class BengioMLP(NLPModel):
         n_context: int,
         tokenizer: Tokenizer,
     ):
-        super().__init__(tokenizer)
+        super().__init__(
+            d_model=d_model,
+            d_hidden=d_hidden,
+            n_context=n_context,
+            tokenizer=tokenizer,
+        )
 
         self.n_context = n_context
 
@@ -147,3 +178,16 @@ class BengioMLP(NLPModel):
         logits = self.fc2(x)  # (B, L, vocab_size)
 
         return logits
+
+
+@dataclass
+class Model:
+    """Model class that extends ModelMeta with blob pytorch model.
+
+    Attributes:
+        meta (MLMeta): Metadata for the model.
+        blob (torch.nn.Module): The PyTorch model instance.
+    """
+
+    meta: MLMeta = Field(..., description="Metadata for the model")
+    blob: AbstractModelBlob = Field(..., description="The PyTorch model instance")

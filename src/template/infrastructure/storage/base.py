@@ -96,7 +96,7 @@ class AbstractStorageInfra(ABC):
         pass
 
     @abstractmethod
-    async def list_all(self, prefix: str = "") -> List[str]:
+    async def list_ids(self, prefix: str = "") -> List[str]:
         """
         List all objects with the given prefix.
 
@@ -108,6 +108,19 @@ class AbstractStorageInfra(ABC):
 
         Returns:
             List of object keys.
+        """
+        pass
+
+    @abstractmethod
+    async def list_bytes(self, prefix: str = "") -> List[bytes]:
+        """
+        List all objects with the given prefix and return their content as bytes.
+
+        Args:
+            prefix: Path prefix.
+
+        Returns:
+            List of object content in bytes.
         """
         pass
 
@@ -230,9 +243,14 @@ class AbstractFileRepository(Generic[T], ABC):
         key = self._get_key(identifier)
         return await self.infra_file.delete_bytes(key)
 
-    async def list(self) -> List[str]:
+    async def list_all(self) -> List[T]:
+        """List all objects in the repository and return domain class"""
+        list_bytes = await self.infra_file.list_bytes(prefix=self.prefix)
+        return [self.deserialize(payload) for payload in list_bytes]
+
+    async def list_ids(self) -> List[str]:
         """List all identifiers in the repository."""
-        list_ids = await self.infra_file.list_all(prefix=self.prefix)
+        list_ids = await self.infra_file.list_ids(prefix=self.prefix)
 
         # Remove the prefix and extension from the keys
         slice_pre = len(self.prefix)

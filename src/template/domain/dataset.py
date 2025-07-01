@@ -161,7 +161,7 @@ class DatasetService:
         Returns:
             list[str]: A list of dataset identifiers (file names without extension).
         """
-        return await self.repo.list()
+        return await self.repo.list_ids()
 
     async def merge(self, identifiers: List[str], output_id: str, ratio: Optional[float] = None) -> pl.DataFrame:
         """

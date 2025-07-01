@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings
 from sqlalchemy.engine.url import URL
 
 from template import DATA_PATH
-from template.infrastructure.database.base import AbstractDatabaseInfra
+from template.infrastructure.database.base import AbstractDatabaseInfra, Base
 from template.infrastructure.storage.base import AbstractStorageInfra
 
 
@@ -58,7 +58,10 @@ class Settings(ABC, BaseSettings):
     Base settings for the application.
     """
 
-    model_config = ConfigDict(extra="ignore", env_file_encoding="utf-8")
+    model_config = ConfigDict(
+        extra="ignore",
+        env_file_encoding="utf-8",
+    )
 
     host: str = Field(default="localhost", alias="HOST")
     port: int = Field(default=8000, alias="PORT")
@@ -149,9 +152,9 @@ def get_database_infra(settings: Settings) -> AbstractDatabaseInfra:
     from template.infrastructure.database.adapter import PostgresDatabaseInfra, SQLiteDatabaseInfra
 
     if settings.environment == Environment.DEVELOPMENT:
-        return SQLiteDatabaseInfra()
+        return SQLiteDatabaseInfra(base=Base)
 
-    return PostgresDatabaseInfra()
+    return PostgresDatabaseInfra(base=Base)
 
 
 def get_storage_infra(settings: Settings) -> AbstractStorageInfra:

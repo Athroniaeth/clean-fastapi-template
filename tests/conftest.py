@@ -5,11 +5,11 @@ import pytest
 from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
 from loguru import logger
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncEngine
-from template.infrastructure.database.base import Base
-from template.interface.api.app import create_app, lifespan
-from tests.test_settings import CustomSettings
+
+from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
+from template.infrastructure.database.base import AbstractDatabaseInfra, Base
+from template.infrastructure.storage.base import AbstractStorageInfra
+from template.infrastructure.storage.local import InMemoryStorageInfra
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -18,7 +18,7 @@ def cleanup_logger():
     logger.remove()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 async def client() -> AsyncIterator[AsyncClient]:
     """
     Fixture to create an HTTP client for testing.
@@ -26,7 +26,10 @@ async def client() -> AsyncIterator[AsyncClient]:
     Notes:
         See: https://github.com/Kludex/fastapi-tips?tab=readme-ov-file#5-use-httpxs-asyncclient-instead-of-testclient
     """
-    settings = CustomSettings()
+    from template.interface.api.app import create_app, lifespan
+    from template.settings import Settings
+
+    settings = Settings()
 
     # Delete lifespan (faster tests after finish running)
     app = create_app(
@@ -38,37 +41,26 @@ async def client() -> AsyncIterator[AsyncClient]:
 
     async with LifespanManager(app) as manager:
         transport = ASGITransport(app=manager.app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+        ) as client:
             yield client
 
 
-@pytest.fixture
-async def engine():
-    """Create a SQLite in-memory engine and initialize the schema."""
-    eng = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
-
-    async with eng.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield eng
-    await eng.dispose()
+@pytest.fixture(scope="function")
+async def infra_database() -> AsyncIterator[AbstractDatabaseInfra]:
+    """Fixture to create an in-memory SQLite database for testing."""
+    # Create SQLAlchemy models in the database
+    infra_database = InMemorySQLiteDatabaseInfra(base=Base)
+    await infra_database.create_schema()
+    yield infra_database
 
 
 @pytest.fixture(scope="function")
-async def session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
-    """
-    Create a nested transaction and rollback at the end to isolate tests.
-    """
-    async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    async with engine.connect() as conn:
-        async with conn.begin():  # outer transaction
-            session = async_session(bind=conn)
-
-            # BEGIN SAVEPOINT
-            await conn.execute(text("SAVEPOINT test_savepoint"))
-            try:
-                yield session
-            finally:
-                # ROLLBACK TO SAVEPOINT to clean up
-                await conn.execute(text("ROLLBACK TO SAVEPOINT test_savepoint"))
-                await session.close()
+async def infra_storage() -> AsyncIterator[AbstractStorageInfra]:
+    """Fixture to create an in-memory storage infrastructure for testing."""
+    # Create an in-memory storage infrastructure
+    infra_storage = InMemoryStorageInfra()
+    yield infra_storage
