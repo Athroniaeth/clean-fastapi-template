@@ -43,7 +43,7 @@ async def create_user(
         password (str): The password for the new user (will be prompted securely).
     """
 
-    from template.interface.api.routes.schemas.users import UserCreateSchema
+    from template.interface.api.schemas.users import UserCreateSchema
 
     async with get_service() as service:
         schema = UserCreateSchema(username=username, raw_password=password)
@@ -117,7 +117,7 @@ async def update_user(
         password (Optional[str]): New password (optional, will be prompted if provided).
     """
 
-    from template.interface.api.routes.schemas.users import UserUpdateSchema
+    from template.interface.api.schemas.users import UserUpdateSchema
 
     # If password flag is provided but no value, prompt for it securely
     if password is not None and password == "":

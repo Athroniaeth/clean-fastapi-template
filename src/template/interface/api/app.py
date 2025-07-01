@@ -12,10 +12,10 @@ from template.core.improve import State, FastAPI
 from template import get_version
 from template.core.exceptions import APIException
 
-from template.interface.api.routes.v1.router import index_router, api_router
 
 from template.infrastructure.storage.base import AbstractStorageInfra
 from template.infrastructure.database.base import AbstractDatabaseInfra
+from template.interface.api.v1.router import index_router, api_router
 
 from template.settings import get_settings, Settings, get_storage_infra, get_database_infra
 
@@ -31,6 +31,9 @@ async def lifespan(
 
     # Note: We log with TRACE for not spam with pytest
     logger.debug("Starting FastAPI application lifecycle")
+
+    # Ensure the database schema is created
+    await infra_database.create_schema()
 
     state = State(
         title=app.title,

@@ -5,12 +5,12 @@ from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from template.interface.api.routes.depends import inject_infra_storage
+from template.interface.api.depends import inject_infra_storage
 from template.core.exceptions import APIException
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.repositories.users import UserRepository
 from template.application.users import UserService
-from template.interface.api.routes.schemas.users import UserReadResponse, UserCreateSchema
+from template.interface.api.schemas.users import UserReadResponse, UserCreateSchema
 from template.domain.users import UserNotFoundException
 
 

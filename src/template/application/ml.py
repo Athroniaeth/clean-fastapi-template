@@ -91,6 +91,45 @@ class MLService:
             blob=blob,
         )
 
+    async def delete(self, id_: str) -> None:
+        """
+        Delete a dataset by its identifier.
+
+        Args:
+            id_ (int): The identifier of the dataset.
+        """
+        # Check existence and integrity before deletion
+        await self.get(id_)
+        await self.blob.delete(id_)
+        await self.repo.delete(id_)
+
+    async def list(self) -> List[Model]:
+        """
+        List all datasets in the repository.
+
+        Returns:
+            list[str]: A list of dataset identifiers (file names without extension).
+        """
+        list_model = []
+        generator = zip(
+            await self.repo.list_all(),
+            await self.blob.list_all(),
+        )
+        for meta, blob in generator:
+            model = Model(meta=meta, blob=blob)
+            list_model.append(model)
+
+        return list_model
+
+    async def list_ids(self) -> List[str]:
+        """
+        List all dataset identifiers in the repository.
+
+        Returns:
+            list[str]: A list of dataset identifiers (file names without extension).
+        """
+        return [meta.id_ for meta in await self.repo.list_all()]
+
     async def train(
         self,
         id_: str,
@@ -173,33 +212,3 @@ class MLService:
             meta=meta,
             blob=blob,
         )
-
-    async def delete(self, id_: str) -> None:
-        """
-        Delete a dataset by its identifier.
-
-        Args:
-            id_ (int): The identifier of the dataset.
-        """
-        # Check existence and integrity before deletion
-        await self.get(id_)
-        await self.blob.delete(id_)
-        await self.repo.delete(id_)
-
-    async def list(self) -> List[Model]:
-        """
-        List all datasets in the repository.
-
-        Returns:
-            list[str]: A list of dataset identifiers (file names without extension).
-        """
-        list_model = []
-        generator = zip(
-            await self.repo.list_all(),
-            await self.blob.list_all(),
-        )
-        for meta, blob in generator:
-            model = Model(meta=meta, blob=blob)
-            list_model.append(model)
-
-        return list_model

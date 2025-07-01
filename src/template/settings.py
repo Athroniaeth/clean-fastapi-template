@@ -168,7 +168,7 @@ def get_storage_infra(settings: Settings) -> AbstractStorageInfra:
 
     if settings.local_storage:
         base_path = DATA_PATH.relative_to(Path(os.getcwd()).parent)
-        logger.info("Using LocalStorageInfra infrastructure")
+        logger.debug("Using LocalStorageInfra infrastructure")
         logger.debug(f"LocalStorageInfra using base path '{base_path}'")
         return LocalStorageInfra(base_path=DATA_PATH)
 

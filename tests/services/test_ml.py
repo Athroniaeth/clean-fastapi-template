@@ -91,6 +91,34 @@ async def test_list_models(service: MLService):
     assert any(model.meta.id_ == "model2" for model in models)
 
 
+async def test_list_models_id(service: MLService):
+    """Test listing identifiers created models."""
+    # Create multiple models
+    await service.create(
+        id_="model1",
+        version="1.0.0",
+        d_model=128,
+        d_hidden=64,
+        n_context=10,
+        tokenizer=CharTokenizer.from_sentences(["This is a test sentence."]),
+        model=BengioMLP,
+    )
+    await service.create(
+        id_="model2",
+        version="1.0.0",
+        d_model=128,
+        d_hidden=64,
+        n_context=10,
+        tokenizer=CharTokenizer.from_sentences(["This is another test sentence."]),
+        model=BengioMLP,
+    )
+
+    ids = await service.list_ids()
+
+    assert len(ids) == 2
+    assert ids == ["model1", "model2"]
+
+
 async def test_train_model(service: MLService):
     """Test training a model.
 
