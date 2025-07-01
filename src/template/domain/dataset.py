@@ -1,5 +1,5 @@
 import io
-from typing import Sequence, Type, List, Optional
+from typing import Sequence, Type, List, Optional, Tuple
 
 import polars as pl
 import torch
@@ -66,7 +66,7 @@ class Dataset(TorchDataset):
     def __len__(self):
         return len(self.sentences)
 
-    def __getitem__(self, index: int) -> (torch.Tensor, torch.Tensor):
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get a single item from the dataset."""
         sentence = self.sentences[index]
         tokens = [self.sos_index] + self.tokenizer.encode(sentence) + [self.eos_index]

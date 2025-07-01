@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, String, func, DateTime, select, update
+from sqlalchemy import String, func, DateTime, select, update
+from sqlalchemy.orm import Mapped, mapped_column
 
 from template.domain.ml import AbstractModelBlob, MLMeta
 from template.infrastructure.database.base import Base, AbstractDatabaseInfra
@@ -14,17 +16,18 @@ class ModelMLMeta(Base):
     """Metadata for NLP models, used for persistence in the database."""
 
     __tablename__ = "models"
-    id_ = Column(
+
+    id_: Mapped[str] = mapped_column(
         String(64),
-        unique=True,
         primary_key=True,
+        autoincrement=False,
     )
-    version = Column(
+    version: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
         default="1.0.0",
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,

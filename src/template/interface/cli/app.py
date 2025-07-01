@@ -35,7 +35,7 @@ cli.add_typer(cli_users)
 cli.add_typer(cli_ml)
 
 
-def _get_workers(expected_workers: int) -> Optional[int]:
+def _get_workers(expected_workers: Optional[int]) -> Optional[int]:
     """Get the number of workers to use."""
     max_workers = os.cpu_count()
 
@@ -60,17 +60,25 @@ def _run(
     host: str,
     port: int,
     source: str,
-    desired_workers: int = 1,
+    workers: Optional[int],
     reload: bool = False,
 ):
-    """Run the server using uvicorn."""
+    """Run the server using uvicorn.
+
+    Args:
+        host (str): Host to bind the server.
+        port (int): Port to bind the server.
+        source (str): Source of the FastAPI app in factory mode.
+        reload (bool): Whether to enable auto-reload for development.
+        workers (Optional[int]): Number of workers to use (None for no workers).
+    """
     import uvicorn
 
     str_host = "localhost" if host == "0.0.0.0" else host
     logger.info(f"Running server on http://{str_host}:{port}")
 
     # Get the amount workers available
-    workers = _get_workers(desired_workers)
+    workers = _get_workers(workers)
 
     # Launch uvicorn in factory mode
     uvicorn.run(
@@ -101,11 +109,11 @@ def callback(level: LoggingLevel = Level.INFO):
 
 @cli.command()
 def dev(
-    source: str = "template.interface.api.app:factory_app",
-    host: str = typer.Option("localhost", envvar="HOST"),
-    port: int = typer.Option(8000, envvar="PORT"),
-    workers: Optional[int] = typer.Option(None, envvar="WORKERS"),
+    source: str = typer.Option("template.interface.api.app:factory_app"),
+    host: str = typer.Option("localhost", envvar="HOST", help="Host to bind the server"),
+    port: int = typer.Option(8000, envvar="PORT", help="Port to bind the server"),
     reload: bool = typer.Option(False, envvar="RELOAD", help="Enable auto-reload for development"),
+    workers: Optional[int] = typer.Option(None, envvar="WORKERS", help="Number of workers to use (None for no workers)"),
 ):
     """Run the server in development mode."""
     _run(
@@ -113,5 +121,5 @@ def dev(
         port=port,
         reload=reload,
         source=source,
-        desired_workers=workers,
+        workers=workers,
     )
