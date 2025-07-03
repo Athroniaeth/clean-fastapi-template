@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, Type
 
 from loguru import logger
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncAttrs, create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
-
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -69,7 +69,7 @@ class AbstractDatabaseInfra(ABC):
         self._base = base
         self._engine = create_async_engine(database_url, echo=echo, future=future)
         self._sessionmaker = async_sessionmaker(self._engine, expire_on_commit=expire_on_commit)
-        self._session = self.session
+        self._session = self.get_session
 
     async def create_schema(self) -> None:
         """Create the database schema."""
@@ -77,7 +77,7 @@ class AbstractDatabaseInfra(ABC):
             await conn.run_sync(self._base.metadata.create_all)
 
     @asynccontextmanager
-    async def session(self) -> AsyncIterator[AsyncSession]:
+    async def get_session(self) -> AsyncIterator[AsyncSession]:
         """Context manager for database session."""
         async with self._sessionmaker() as session:
             try:
@@ -89,3 +89,10 @@ class AbstractDatabaseInfra(ABC):
                 raise
             finally:
                 await session.close()
+
+    async def clean(self) -> None:
+        """Clean the database schema."""
+        async with self.get_session() as session:
+            for table in Base.metadata.sorted_tables:
+                await session.execute(delete(table))
+            await session.commit()

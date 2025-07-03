@@ -49,13 +49,23 @@ async def client() -> AsyncIterator[AsyncClient]:
             yield client
 
 
-@pytest.fixture(scope="function")
-async def infra_database() -> AsyncIterator[AbstractDatabaseInfra]:
+@pytest.fixture(scope="session")
+async def _infra_database() -> AsyncIterator[AbstractDatabaseInfra]:
     """Fixture to create an in-memory SQLite database for testing."""
     # Create SQLAlchemy models in the database
     infra_database = InMemorySQLiteDatabaseInfra(base=Base)
     await infra_database.create_schema()
     yield infra_database
+
+
+@pytest.fixture(scope="function")
+async def infra_database(_infra_database: AbstractDatabaseInfra) -> AsyncIterator[AbstractDatabaseInfra]:
+    """Fixture to create an in-memory SQLite database for testing."""
+    # Use the in-memory database infrastructure
+    yield _infra_database
+
+    # Clean up the database after the test
+    await _infra_database.clean()
 
 
 @pytest.fixture(scope="function")
