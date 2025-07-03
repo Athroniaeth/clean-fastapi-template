@@ -78,7 +78,7 @@ class APIKeyCreateResponse(APIKeyRead):
         plain_key (str): The raw (unhashed) API key generated for the client.
     """
 
-    plain_key: Optional[str] = Field(default=None, exclude=True)
+    plain_key: Optional[str] = Field(default=None)
 
 
 class DocumentedAPIKeyRead(APIKeyRead):
