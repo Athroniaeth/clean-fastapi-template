@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
+from template.domain.api_keys import generate_raw_key
+
 
 class APIKeySelect(BaseModel):
     """Schema for selecting an API key by its identifier.
@@ -11,7 +13,11 @@ class APIKeySelect(BaseModel):
         id (int): The identifier of the API key (alias “id”).
     """
 
-    id: int = Field(...)
+    id: int = Field(
+        default=...,
+        description="The identifier of the API key.",
+        examples=[1, 2, 3],
+    )
 
 
 class APIKeySchema(BaseModel):
@@ -25,9 +31,22 @@ class APIKeySchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    name: str = Field(..., max_length=64)
-    description: Optional[str] = Field(None, max_length=255)
-    is_active: bool = Field(True)
+    name: str = Field(
+        default=...,
+        max_length=64,
+        description="Human-readable name of the API key.",
+        examples=["dev", "production"],
+    )
+    description: Optional[str] = Field(
+        default=None,
+        max_length=256,
+        description="Optional description of the API key.",
+    )
+    is_active: bool = Field(
+        default=True,
+        description="Indicates whether the API key is currently active.",
+        examples=[True, False],
+    )
 
 
 class APIKeyCreate(APIKeySchema):
@@ -65,7 +84,11 @@ class APIKeyRead(APIKeySelect, APIKeySchema):
         created_at (datetime): Timestamp when the key was created.
     """
 
-    created_at: datetime
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp when the API key was created.",
+        examples=[datetime.now().isoformat()],
+    )
 
 
 class APIKeyCreateResponse(APIKeyRead):
@@ -78,37 +101,13 @@ class APIKeyCreateResponse(APIKeyRead):
         plain_key (str): The raw (unhashed) API key generated for the client.
     """
 
-    plain_key: Optional[str] = Field(default=None)
-
-
-class DocumentedAPIKeyRead(APIKeyRead):
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                APIKeyRead(
-                    id=1,
-                    name="Example API Key",
-                    description="This is an example API key.",
-                    is_active=True,
-                    created_at=datetime.now(),
-                ).model_dump()
-            ]
-        }
-    }
-
-
-class DocumentedAPIKeyCreateResponse(APIKeyCreateResponse):
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                APIKeyCreateResponse(
-                    id=1,
-                    name="Example API Key",
-                    description="This is an example API key.",
-                    is_active=True,
-                    created_at=datetime.now(),
-                    plain_key="example-raw-key",
-                ).model_dump()
-            ]
-        }
-    }
+    plain_key: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description=(
+            "The raw (unhashed) API key generated for the client. "
+            "This is a one-time value that should be stored securely by the client. "
+            "It will not be returned again after creation."
+        ),
+        examples=[generate_raw_key()],
+    )

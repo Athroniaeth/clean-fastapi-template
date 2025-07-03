@@ -1,7 +1,6 @@
 from typing import Sequence
 
 from template.interface.api.schemas.users import (
-    UserReadResponseSchema,
     UserCreateSchema,
     UserReadResponse,
     UserUpdateSchema,
@@ -35,7 +34,7 @@ class UserService:
             user_id (int): identifier of the user.
 
         Returns:
-            UserReadResponseSchema: the retrieved user.
+            UserReadResponse: the retrieved user.
 
         Raises:
             UserNotFoundException: if no such user exists.
@@ -64,7 +63,7 @@ class UserService:
 
         return user
 
-    async def get(self, user_id: int) -> UserReadResponseSchema:
+    async def get(self, user_id: int) -> UserReadResponse:
         """
         Retrieve an User by its ID.
 
@@ -72,15 +71,15 @@ class UserService:
             user_id (int): identifier of the user.
 
         Returns:
-            UserReadResponseSchema: the retrieved user.
+            UserReadResponse: the retrieved user.
 
         Raises:
             UserNotFoundException: if no such user exists.
         """
         user = await self._get(user_id)
-        return UserReadResponseSchema.model_validate(user)
+        return UserReadResponse.model_validate(user)
 
-    async def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[UserReadResponseSchema]:
+    async def list_all(self, skip: int = 0, limit: int = 100) -> Sequence[UserReadResponse]:
         """
         List Users with optional pagination and active‐only filtering.
 
@@ -95,7 +94,7 @@ class UserService:
             skip=skip,
             limit=limit,
         )
-        return [UserReadResponseSchema.model_validate(k) for k in users]
+        return [UserReadResponse.model_validate(k) for k in users]
 
     async def create(self, data: UserCreateSchema) -> UserReadResponse:
         """
@@ -120,7 +119,7 @@ class UserService:
         # Build response schema
         return UserReadResponse.model_validate(user)
 
-    async def update(self, id_: int, data: UserUpdateSchema) -> UserReadResponseSchema:
+    async def update(self, id_: int, data: UserUpdateSchema) -> UserReadResponse:
         """
         Update fields of an existing User.
 
@@ -129,14 +128,14 @@ class UserService:
             data (UserUpdateSchema): fields to modify.
 
         Returns:
-            UserReadResponseSchema: updated user.
+            UserReadResponse: updated user.
 
         Raises:
             UserNotFoundException: if no such user exists.
         """
         user = await self._get(id_)
         await self._repo.update(user, data.model_dump())
-        return UserReadResponseSchema.model_validate(user)
+        return UserReadResponse.model_validate(user)
 
     async def verify_password(self, username: str, raw_password: str):
         """

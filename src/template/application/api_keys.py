@@ -1,11 +1,10 @@
 from typing import Sequence, Optional
 
 from template.interface.api.schemas.api_keys import (
-    APIKeyRead,
     APIKeyUpdate,
     APIKeyCreate,
-    DocumentedAPIKeyRead,
-    DocumentedAPIKeyCreateResponse,
+    APIKeyRead,
+    APIKeyCreateResponse,
 )
 from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException
 from template.infrastructure.repositories.api_keys import APIKeyRepository, ApiKeyModel
@@ -42,7 +41,7 @@ class APIKeyService:
 
         return key
 
-    async def get(self, key_id: int) -> DocumentedAPIKeyRead:
+    async def get(self, key_id: int) -> APIKeyRead:
         """
         Retrieve an API key by its ID.
 
@@ -56,9 +55,9 @@ class APIKeyService:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        return DocumentedAPIKeyRead.model_validate(key)
+        return APIKeyRead.model_validate(key)
 
-    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[DocumentedAPIKeyRead]:
+    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[APIKeyRead]:
         """
         List API keys with optional pagination and active‐only filtering.
 
@@ -75,9 +74,9 @@ class APIKeyService:
             limit=limit,
             active_only=active_only,
         )
-        return [DocumentedAPIKeyRead.model_validate(k) for k in keys]
+        return [APIKeyRead.model_validate(k) for k in keys]
 
-    async def create(self, data: APIKeyCreate) -> DocumentedAPIKeyCreateResponse:
+    async def create(self, data: APIKeyCreate) -> APIKeyCreateResponse:
         """
         Create and persist a new API key.
 
@@ -88,7 +87,11 @@ class APIKeyService:
             APIKeyCreateResponse: the created key + its raw plain_key.
         """
         # Build model (generates & hashes raw_key internally)
-        model = ApiKeyModel(name=data.name, description=data.description, is_active=data.is_active)
+        model = ApiKeyModel(
+            name=data.name,
+            description=data.description,
+            is_active=data.is_active,
+        )
 
         # Persist the model
         key = await self._repo.create(model)
@@ -97,11 +100,11 @@ class APIKeyService:
         raw_key = key.plain_key
 
         # Build response schema
-        resp = DocumentedAPIKeyCreateResponse.model_validate(key)
+        resp = APIKeyCreateResponse.model_validate(key)
         resp.plain_key = raw_key
         return resp
 
-    async def update(self, id_: int, data: APIKeyUpdate) -> DocumentedAPIKeyRead:
+    async def update(self, id_: int, data: APIKeyUpdate) -> APIKeyRead:
         """
         Update fields of an existing API key.
 
@@ -117,7 +120,7 @@ class APIKeyService:
         """
         key = await self._get_key(id_)
         await self._repo.update(key, data.model_dump())
-        return DocumentedAPIKeyRead.model_validate(key)
+        return APIKeyRead.model_validate(key)
 
     async def activate(self, key_id: int, active: bool) -> APIKeyRead:
         """

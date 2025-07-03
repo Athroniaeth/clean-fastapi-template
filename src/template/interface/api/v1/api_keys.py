@@ -15,13 +15,18 @@ from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.application.api_keys import APIKeyService
 from template.interface.api.schemas.api_keys import (
     APIKeyCreate,
-    DocumentedAPIKeyRead,
+    APIKeyRead,
     APIKeyUpdate,
-    DocumentedAPIKeyCreateResponse,
+    APIKeyCreateResponse,
 )
 
 
-async def _get_service(infra: Annotated[AbstractDatabaseInfra, Depends(inject_infra_database)]) -> APIKeyService:
+async def _get_service(
+    infra: Annotated[
+        AbstractDatabaseInfra,
+        Depends(inject_infra_database),
+    ],
+) -> APIKeyService:
     """Return a ready-to-use service instance."""
     repository = APIKeyRepository(infra)
     return APIKeyService(repository)
@@ -37,29 +42,29 @@ keys_router = APIRouter(
 async def get_api_key(
     id_: int,
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> DocumentedAPIKeyRead:
+) -> APIKeyRead:
     return await service.get(id_)
 
 
 @keys_router.post(
     "/",
-    response_model=DocumentedAPIKeyCreateResponse,
+    response_model=APIKeyCreateResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_api_key(
     payload: Annotated[APIKeyCreate, Query(...)],
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> DocumentedAPIKeyCreateResponse:
+) -> APIKeyCreateResponse:
     return await service.create(payload)
 
 
 @keys_router.get("/", status_code=status.HTTP_200_OK)
 async def list_api_keys(
     service: Annotated[APIKeyService, Depends(_get_service)],
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
-    active_only: bool = Query(False),
-) -> Sequence[DocumentedAPIKeyRead]:
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+    active_only: bool = Query(default=False),
+) -> Sequence[APIKeyRead]:
     return await service.list_all(
         skip=skip,
         limit=limit,
@@ -96,5 +101,5 @@ async def update_api_key(
     id_: int,
     payload: Annotated[APIKeyUpdate, Query()],
     service: Annotated[APIKeyService, Depends(_get_service)],
-) -> DocumentedAPIKeyRead:
+) -> APIKeyRead:
     return await service.update(id_, payload)

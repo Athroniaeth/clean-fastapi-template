@@ -10,7 +10,11 @@ class UserSelectSchema(BaseModel):
         id (int): The identifier of the User (alias “id”).
     """
 
-    id: int = Field(...)
+    id: int = Field(
+        default=...,
+        description="The identifier of the User.",
+        examples=[1, 2, 3],
+    )
 
 
 class UserByNameSelectSchema(BaseModel):
@@ -20,7 +24,12 @@ class UserByNameSelectSchema(BaseModel):
         username (str): The human-readable name of the User.
     """
 
-    username: str = Field(..., max_length=64)
+    username: str = Field(
+        default=...,
+        min_length=1,
+        max_length=64,
+        examples=["example_user", "john_doe"],
+    )
 
 
 class UserBaseSchema(UserByNameSelectSchema):
@@ -36,9 +45,12 @@ class UserBaseSchema(UserByNameSelectSchema):
 class UserCreateSchema(UserBaseSchema):
     """Schema for creating a new User."""
 
-    raw_password: str = Field(..., min_length=8, max_length=128)
-
-    model_config = ConfigDict(json_schema_extra={"examples": [{"username": "user", "raw_password": "example_password"}]})
+    raw_password: str = Field(
+        default=...,
+        min_length=8,
+        max_length=128,
+        examples=["securepassword123"],
+    )
 
 
 class UserUpdateSchema(UserBaseSchema):
@@ -56,18 +68,8 @@ class UserReadResponse(UserSelectSchema, UserBaseSchema):
         created_at (datetime): Timestamp when the key was created.
     """
 
-    created_at: datetime
-
-
-class UserReadResponseSchema(UserReadResponse):
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                UserReadResponse(
-                    id=1,
-                    username="example_user",
-                    created_at=datetime.now(),
-                ).model_dump()
-            ]
-        }
-    }
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp when the User was created.",
+        examples=[datetime.now().isoformat()],
+    )
