@@ -108,7 +108,11 @@ def train_model(
     with contextlib.suppress(KeyboardInterrupt):
         for epoch in range(num_epochs):
             model.train()
-            pbar = tqdm(train_loader, total=len(train_loader), leave=False)
+            pbar = tqdm(
+                train_loader,
+                total=len(train_loader),
+                leave=False,
+            )
 
             list_loss = []
             for x, y in pbar:

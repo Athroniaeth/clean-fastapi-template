@@ -4,10 +4,10 @@ from typing import Mapping
 from fastapi import FastAPI as _FastAPI
 from starlette.requests import Request as _Request
 
-from template.core.constants import Lifespan
 
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.storage.base import AbstractStorageInfra
+from template.interface.cli.app import Lifespan
 from template.settings import Settings
 
 

@@ -21,6 +21,9 @@ class MLMeta(BaseModel):
         created_at (datetime): Timestamp when the model was created.
     """
 
+    class Config:
+        from_attributes = True
+
     id_: str = Field(..., description="Unique identifier (name) for the model")
     version: str = Field("1.0.0", description="Version of the model")
     created_at: datetime = Field(default_factory=datetime.now)

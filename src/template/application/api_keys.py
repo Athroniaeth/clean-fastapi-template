@@ -34,7 +34,7 @@ class APIKeyService:
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
-        key = await self._repo.get(key_id)
+        key = await self._repo.get_by_id(key_id)
 
         if not key:
             raise APIKeyNotFoundException(key_id)

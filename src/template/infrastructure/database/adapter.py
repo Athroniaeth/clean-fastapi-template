@@ -147,7 +147,7 @@ class SQLiteDatabaseInfra(AbstractDatabaseInfra):
         expire_on_commit: bool = False,
     ):
         super().__init__(
-            "sqlite+aiosqlite:///./test.db",
+            "sqlite+aiosqlite:///./data/db.sqlite",
             base=base,
             echo=echo,
             future=future,

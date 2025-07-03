@@ -44,11 +44,7 @@ def to_domain(row: ModelMLMeta) -> MLMeta:
     Returns:
         MLMeta: The converted domain object.
     """
-    return MLMeta(
-        id_=row.id_,
-        version=row.version,
-        created_at=row.created_at,
-    )
+    return MLMeta.model_validate(row)
 
 
 def to_row(model: MLMeta) -> ModelMLMeta:
