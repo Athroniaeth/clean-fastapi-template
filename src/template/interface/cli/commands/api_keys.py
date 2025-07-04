@@ -19,7 +19,7 @@ async def get_service():
 
     from template.infrastructure.database.base import get_db
     from template.infrastructure.repositories.api_keys import APIKeyRepository
-    from template.application.api_keys import APIKeyService
+    from template.application.api_keys import ApiKeyService
 
     from template.settings import get_settings
 
@@ -27,7 +27,7 @@ async def get_service():
 
     async with get_db(settings.database_url) as session:
         repo = APIKeyRepository(session)
-        yield APIKeyService(repo)
+        yield ApiKeyService(repo)
         await session.close()
 
 

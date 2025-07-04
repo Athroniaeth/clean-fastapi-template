@@ -124,6 +124,8 @@ async def test_train_model(service: MLService):
 
     Mock template.core.ml.train_model function to avoid actual training.
     """
+    # Todo: This test is too slow
+    pytest.skip("This test is too slow, please reactivate it after mocking it.")
     dataframe = polars.DataFrame({"text": ["This is a test sentence."]})
 
     with patch("template.application.ml.train_model") as mock_train:

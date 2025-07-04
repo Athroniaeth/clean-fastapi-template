@@ -1,16 +1,11 @@
+import time
 from typing import Sequence, Optional
 
-from template.interface.api.schemas.api_keys import (
-    APIKeyUpdate,
-    APIKeyCreate,
-    APIKeyRead,
-    APIKeyCreateResponse,
-)
-from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException
-from template.infrastructure.repositories.api_keys import APIKeyRepository, ApiKeyModel
+from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException, ApiKey
+from template.infrastructure.repositories.api_keys import APIKeyRepository
 
 
-class APIKeyService:
+class ApiKeyService:
     """
     Service layer for managing API keys.
 
@@ -21,18 +16,15 @@ class APIKeyService:
     def __init__(self, repo: APIKeyRepository):
         self._repo = repo
 
-    async def _get_key(self, key_id: int) -> ApiKeyModel:
+    async def _get_key(self, key_id: int) -> ApiKey:
         """
-        Retrieve an API key by its ID.
+        Helper method to retrieve an API key by its ID.
 
         Args:
             key_id (int): identifier of the key.
 
         Returns:
-            APIKeyRead: the retrieved key.
-
-        Raises:
-            APIKeyNotFoundException: if no such key exists.
+            ApiKey: the retrieved key.
         """
         key = await self._repo.get_by_id(key_id)
 
@@ -41,12 +33,12 @@ class APIKeyService:
 
         return key
 
-    async def get(self, key_id: int) -> APIKeyRead:
+    async def get(self, id_: int) -> ApiKey:
         """
         Retrieve an API key by its ID.
 
         Args:
-            key_id (int): identifier of the key.
+            id_ (int): identifier of the key.
 
         Returns:
             APIKeyRead: the retrieved key.
@@ -54,10 +46,9 @@ class APIKeyService:
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
-        key = await self._get_key(key_id)
-        return APIKeyRead.model_validate(key)
+        return await self._get_key(id_)
 
-    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[APIKeyRead]:
+    async def list_all(self, skip: int = 0, limit: int = 100, active_only: bool = False) -> Sequence[ApiKey]:
         """
         List API keys with optional pagination and active‐only filtering.
 
@@ -67,62 +58,75 @@ class APIKeyService:
             active_only (bool): if True, only return active keys.
 
         Returns:
-            List[APIKeyOutputSchema]: list of key schemas.
+            List[ApiKey]: list of key schemas.
         """
-        keys = await self._repo.list_all(
+        return await self._repo.list_all(
             skip=skip,
             limit=limit,
             active_only=active_only,
         )
-        return [APIKeyRead.model_validate(k) for k in keys]
 
-    async def create(self, data: APIKeyCreate) -> APIKeyCreateResponse:
+    async def create(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        is_active: bool = True,
+    ) -> ApiKey:
         """
         Create and persist a new API key.
 
         Args:
-            data (APIKeyCreateSchema): input data.
+            name (str): human-readable name for the key.
+            description (Optional[str]): optional description.
+            is_active (bool): whether the key should be active upon creation.
 
         Returns:
-            APIKeyCreateResponse: the created key + its raw plain_key.
+            ApiKey: the created key + its raw plain_key.
         """
-        # Build model (generates & hashes raw_key internally)
-        model = ApiKeyModel(
-            name=data.name,
-            description=data.description,
-            is_active=data.is_active,
+        time_elapsed = time.time()
+        api_key = ApiKey.create(
+            name=name,
+            description=description,
+            is_active=is_active,
         )
-
+        print(f"\tKey created (pydantic) in {time.time() - time_elapsed:.2f} seconds")
         # Persist the model
-        key = await self._repo.create(model)
+        api_key = await self._repo.create(api_key)
+        print(f"\tKey persisted in {time.time() - time_elapsed:.2f} seconds")
+        return api_key
 
-        # Retrieve the one-time plain key
-        raw_key = key.plain_key
-
-        # Build response schema
-        resp = APIKeyCreateResponse.model_validate(key)
-        resp.plain_key = raw_key
-        return resp
-
-    async def update(self, id_: int, data: APIKeyUpdate) -> APIKeyRead:
+    async def update(self, api_key: ApiKey) -> ApiKey:
         """
         Update fields of an existing API key.
 
         Args:
-            id_ (int): identifier of the key.
-            data (APIKeyUpdate): fields to modify.
+            api_key (APIKeyUpdate): fields to modify.
 
         Returns:
-            APIKeyRead: updated key.
+            ApiKey: updated key.
 
         Raises:
             APIKeyNotFoundException: if no such key exists.
         """
-        key = await self._get_key(id_)
-        await self._repo.update(key, data.model_dump())
-        return APIKeyRead.model_validate(key)
+        if not await self._repo.update(api_key):
+            raise APIKeyNotFoundException(api_key.id_)
 
-    async def activate(self, key_id: int, active: bool) -> APIKeyRead:
+        return api_key
+
+    async def delete(self, api_key: ApiKey) -> None:
+        """
+        Permanently delete an API key by its ID.
+
+        Args:
+            api_key (ApiKey): the key
+
+        Raises:
+            APIKeyNotFoundException: if no such key exists.
+        """
+        if not await self._repo.delete(api_key):
+            raise APIKeyNotFoundException(api_key.id_)
+
+    async def activate(self, key_id: int, active: bool) -> ApiKey:
         """
         Activate or deactivate an API key.
 
@@ -137,8 +141,9 @@ class APIKeyService:
             APIKeyNotFoundException: if no such key exists.
         """
         key = await self._get_key(key_id)
-        await self._repo.update(key, {"is_active": active})
-        return APIKeyRead.model_validate(key)
+        key.is_active = active
+        await self._repo.update(key)
+        return key
 
     async def verify_key(self, raw_key: Optional[str]) -> bool:
         """
@@ -167,16 +172,3 @@ class APIKeyService:
                 return True
 
         raise APIKeyInvalidException(raw_key)
-
-    async def delete(self, key_id: int) -> None:
-        """
-        Permanently delete an API key by its ID.
-
-        Args:
-            key_id (int): identifier of the key to delete.
-
-        Raises:
-            APIKeyNotFoundException: if no such key exists.
-        """
-        key = await self._get_key(key_id)
-        await self._repo.delete(key)

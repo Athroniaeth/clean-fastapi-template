@@ -9,10 +9,11 @@ from fastapi import (
     Query,
 )
 
+from template.domain.api_keys import ApiKey
 from template.interface.api.depends import inject_infra_database
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.repositories.api_keys import APIKeyRepository
-from template.application.api_keys import APIKeyService
+from template.application.api_keys import ApiKeyService
 from template.interface.api.schemas.api_keys import (
     APIKeyCreate,
     APIKeyRead,
@@ -26,10 +27,10 @@ async def _get_service(
         AbstractDatabaseInfra,
         Depends(inject_infra_database),
     ],
-) -> APIKeyService:
+) -> ApiKeyService:
     """Return a ready-to-use service instance."""
     repository = APIKeyRepository(infra)
-    return APIKeyService(repository)
+    return ApiKeyService(repository)
 
 
 keys_router = APIRouter(
@@ -41,9 +42,11 @@ keys_router = APIRouter(
 @keys_router.get("/{id_}", status_code=status.HTTP_200_OK)
 async def get_api_key(
     id_: int,
-    service: Annotated[APIKeyService, Depends(_get_service)],
+    service: Annotated[ApiKeyService, Depends(_get_service)],
 ) -> APIKeyRead:
-    return await service.get(id_)
+    """Retrieve an API key by its ID."""
+    api_key = await service.get(id_)
+    return APIKeyRead.model_validate(api_key)
 
 
 @keys_router.post(
@@ -53,53 +56,53 @@ async def get_api_key(
 )
 async def create_api_key(
     payload: Annotated[APIKeyCreate, Query(...)],
-    service: Annotated[APIKeyService, Depends(_get_service)],
+    service: Annotated[ApiKeyService, Depends(_get_service)],
 ) -> APIKeyCreateResponse:
-    return await service.create(payload)
+    """Create a new API key."""
+    api_key = await service.create(
+        name=payload.name,
+        description=payload.description,
+        is_active=payload.is_active,
+    )
+    return APIKeyCreateResponse.model_validate(api_key)
 
 
 @keys_router.get("/", status_code=status.HTTP_200_OK)
 async def list_api_keys(
-    service: Annotated[APIKeyService, Depends(_get_service)],
+    service: Annotated[ApiKeyService, Depends(_get_service)],
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=100),
     active_only: bool = Query(default=False),
 ) -> Sequence[APIKeyRead]:
-    return await service.list_all(
+    """List all API keys with optional pagination and active‐only filtering."""
+    api_keys = await service.list_all(
         skip=skip,
         limit=limit,
         active_only=active_only,
     )
+    return [APIKeyRead.model_validate(api_key) for api_key in api_keys]
 
 
 @keys_router.delete(
     "/{id_}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    # Add examples output
-    responses={
-        status.HTTP_204_NO_CONTENT: {
-            "description": "Root endpoint of the application",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": True,
-                    },
-                }
-            },
-        },
-    },
+    status_code=status.HTTP_200_OK,
 )
 async def delete_api_key(
     id_: int,
-    service: Annotated[APIKeyService, Depends(_get_service)],
-):
-    await service.delete(id_)
+    service: Annotated[ApiKeyService, Depends(_get_service)],
+) -> APIKeyRead:
+    """Delete an API key by its ID."""
+    api_key = await service.get(id_)
+    await service.delete(api_key)
+    return APIKeyRead.model_validate(api_key)
 
 
 @keys_router.patch("/{id_}", status_code=status.HTTP_200_OK)
 async def update_api_key(
-    id_: int,
     payload: Annotated[APIKeyUpdate, Query()],
-    service: Annotated[APIKeyService, Depends(_get_service)],
+    service: Annotated[ApiKeyService, Depends(_get_service)],
 ) -> APIKeyRead:
-    return await service.update(id_, payload)
+    """Update an API key by its ID."""
+    api_key = ApiKey.model_validate(payload)
+    api_key = await service.update(api_key)
+    return APIKeyRead.model_validate(api_key)

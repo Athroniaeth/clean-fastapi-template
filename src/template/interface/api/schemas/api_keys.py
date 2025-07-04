@@ -10,10 +10,10 @@ class APIKeySelect(BaseModel):
     """Schema for selecting an API key by its identifier.
 
     Attributes:
-        id (int): The identifier of the API key (alias “id”).
+        id_ (int): The identifier of the API key (alias “id”).
     """
 
-    id: int = Field(
+    id_: int = Field(
         default=...,
         description="The identifier of the API key.",
         examples=[1, 2, 3],
@@ -61,10 +61,11 @@ class APIKeyCreate(APIKeySchema):
     ...
 
 
-class APIKeyUpdate(APIKeySchema):
+class APIKeyUpdate(APIKeySchema, APIKeySelect):
     """Schema for full replacement (PUT) of an existing API key.
 
     Attributes:
+        id_ (int): The identifier of the API key.
         name (str): New human-readable name.
         description (Optional[str]): New description.
         is_active (bool): New activation status.

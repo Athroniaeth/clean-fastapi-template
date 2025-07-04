@@ -3,7 +3,7 @@ from typing import Optional, AsyncIterator
 from fastapi import Depends, Security
 from fastapi.security import APIKeyHeader
 
-from template.application.api_keys import APIKeyService
+from template.application.api_keys import ApiKeyService
 from template.application.ml import MLService
 from template.core.improve import Request
 from template.infrastructure.database.base import AbstractDatabaseInfra
@@ -50,16 +50,16 @@ async def get_service_ml(
 
 async def get_service_api_keys(
     infra: AbstractDatabaseInfra = Depends(inject_infra_database),
-) -> APIKeyService:
+) -> ApiKeyService:
     """Return a ready-to-use API key service instance."""
     repo = APIKeyRepository(infra)
-    service = APIKeyService(repo)
+    service = ApiKeyService(repo)
     return service
 
 
 async def verify_api_key(
     api_key: Optional[str] = Security(api_key_header),
-    service: APIKeyService = Depends(get_service_api_keys),
+    service: ApiKeyService = Depends(get_service_api_keys),
 ) -> None:
     """
     Verify that the API key is valid and active.
