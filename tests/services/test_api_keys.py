@@ -19,7 +19,7 @@ async def service(infra_database: InMemorySQLiteDatabaseInfra) -> AsyncIterator[
     yield service
 
 
-async def test_create_and_get_key(service: ApiKeyService):
+async def test_get_key(service: ApiKeyService):
     """Test creating and retrieving a api key."""
     time_start = time.time()
     # Create the api key
@@ -40,7 +40,7 @@ async def test_create_and_get_key(service: ApiKeyService):
     assert retrieved_key.is_active is True, "Retrieved key is_active status does not match created key status"
 
 
-async def test_create_and_delete_key(service: ApiKeyService):
+async def test_create_key(service: ApiKeyService):
     """Test creating and deleting a api key."""
 
     # Create the api key
@@ -56,6 +56,49 @@ async def test_create_and_delete_key(service: ApiKeyService):
     # Try to retrieve the deleted api key
     with pytest.raises(APIKeyNotFoundException):
         await service.get(api_key.id_)
+
+
+async def test_update_key(service: ApiKeyService):
+    """Test updating an existing api key."""
+
+    # Create an api key to update
+    api_key = await service.create(
+        name="initial_key",
+        description="Initial API Key",
+        is_active=True,
+    )
+    # Retrieve the created key
+    api_key = await service.get(api_key.id_)
+
+    # Update the api key
+    api_key.name = "Updated Key"
+    api_key.description = "This is an updated API Key"
+    api_key.is_active = False
+
+    updated_key = await service.update(api_key)
+
+    # Retrieve the updated key
+    retrieved_key = await service.get(updated_key.id_)
+
+    assert retrieved_key.name == "Updated Key", "Updated key name does not match"
+    assert retrieved_key.description == "This is an updated API Key", "Updated key description does not match"
+    assert retrieved_key.is_active is False, "Updated key is_active status does not match"
+
+
+async def test_delete_key(service: ApiKeyService):
+    """Test deleting an existing api key."""
+
+    # Create an api key to delete
+    api_key = ApiKey(
+        name="not_persisted_key",
+        description="This key will not be persisted",
+        is_active=True,
+        hashed_key="0" * 60,  # Mocked hashed key
+        _plain_key="0" * 32,  # Mocked plain key
+    )
+    # Attempt to delete the key without persisting it
+    with pytest.raises(APIKeyNotFoundException):
+        await service.delete(api_key)
 
 
 async def test_list_all_keys(service: ApiKeyService):
@@ -125,7 +168,8 @@ async def test_get_key_without_providing_id(service: ApiKeyService):
 
     # Attempt to retrieve a key without providing an ID
     with pytest.raises(APIKeyNotFoundException):
-        await service.get(None)  # Assuming None is not a valid ID
+        # FastAPI return None if no key is provided
+        await service.get(None)  # type: ignore
 
 
 async def test_create_key_with_invalid_data(service: ApiKeyService):
@@ -177,56 +221,36 @@ async def test_create_key_with_special_characters(service: ApiKeyService):
     assert retrieved_key.name == "special@key#1", "Key name with special characters does not match"
 
 
-async def test_update_key(service: ApiKeyService):
-    """Test updating an existing api key."""
-
-    # Create an api key to update
-    api_key = await service.create(
-        name="update_key",
-        description="API Key to Update",
-        is_active=True,
-    )
-
-    # Update the api key
-    api_key.name = "Updated Key"
-    api_key.description = "This is an updated API Key"
-    api_key.is_active = False
-
-    updated_key = await service.update(api_key)
-
-    # Retrieve the updated key
-    retrieved_key = await service.get(updated_key.id_)
-
-    assert retrieved_key.name == "Updated Key", "Updated key name does not match"
-    assert retrieved_key.description == "This is an updated API Key", "Updated key description does not match"
-    assert retrieved_key.is_active is False, "Updated key is_active status does not match"
-
-
 async def test_update_non_existent_key(service: ApiKeyService):
     """Test updating a non-existent api key."""
 
+    api_key = ApiKey(
+        id_=9999,  # Assuming this ID does not exist
+        name="Non-existent Key",
+        description="This key does not exist",
+        is_active=True,
+        hashed_key="0" * 60,
+        _plain_key="0" * 32,
+    )
+
     # Attempt to update a key that does not exist
     with pytest.raises(APIKeyNotFoundException):
-        api_key = ApiKey.create(
-            name="Updated Key",
-            description="This key does not exist",
-            is_active=True,
-        )
-        await service.delete(api_key)
         await service.update(api_key)
 
 
 async def test_delete_non_existent_key(service: ApiKeyService):
     """Test deleting a non-existent api key."""
 
+    api_key = ApiKey(
+        id_=9999,  # Assuming this ID does not exist
+        name="Non-existent Key",
+        description="This key does not exist",
+        is_active=True,
+        hashed_key="0" * 60,
+        _plain_key="0" * 32,
+    )
     # Attempt to delete a key that does not exist
     with pytest.raises(APIKeyNotFoundException):
-        api_key = ApiKey.create(
-            name="Non-existent Key",
-            description="This key does not exist",
-            is_active=True,
-        )
-        await service.delete(api_key)
         await service.delete(api_key)
 
 
@@ -240,9 +264,10 @@ async def test_activate_inactive_key(service: ApiKeyService):
         is_active=False,
     )
     # Activate the key
-    activated_key = await service.activate(api_key.id_, True)
+    await service.activate(api_key.id_, True)
+
     api_key = await service.get(api_key.id_)
-    assert activated_key.is_active is True, "Key should be activated"
+    assert api_key.is_active is True, "Key should be activated"
 
 
 async def test_deactivate_active_key(service: ApiKeyService):

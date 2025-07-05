@@ -2,7 +2,7 @@ import secrets
 from typing import Optional
 
 from passlib.handlers.bcrypt import bcrypt
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, ConfigDict
 from pydantic import computed_field
 from starlette import status
 
@@ -77,6 +77,8 @@ class APIKeyInvalidException(APIKeyException):
 class ApiKey(BaseModel):
     """Domain model for API keys."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id_: int = Field(
         default=None,
     )
@@ -102,9 +104,6 @@ class ApiKey(BaseModel):
     _plain_key: Optional[str] = PrivateAttr(
         default=None,
     )
-
-    class Config:
-        from_attributes = True
 
     @staticmethod
     def generate_raw_key() -> str:

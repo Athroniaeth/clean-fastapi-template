@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import torch
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from torch import nn
 from torch.nn import functional as F
 
@@ -21,8 +21,7 @@ class MLMeta(BaseModel):
         created_at (datetime): Timestamp when the model was created.
     """
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     id_: str = Field(..., description="Unique identifier (name) for the model")
     version: str = Field("1.0.0", description="Version of the model")
