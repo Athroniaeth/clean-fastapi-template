@@ -71,7 +71,15 @@ async def route_generate_model(
     time_end = time.perf_counter()
     time_elapsed = round(time_end - time_start, 4)
     avg_time = round(time_elapsed / inference.n, 4)
-    nrps = math.trunc(1 / time_elapsed)
+
+    # Calculate "Number of Results Per Second" (NRPS)
+    nrps = math.trunc(inference.n / time_elapsed)
+
+    nbr_output_tokens = sum(len(result) for result in list_result)
+    nbr_output_tokens = nbr_output_tokens - len(inference.start_tokens) * inference.n
+
+    # Calculate "Number of Tokens Per Second" (NTPS)
+    ntps = math.trunc(nbr_output_tokens / time_elapsed)
 
     list_result = sorted(list_result)
     set_result = sorted(list(set(list_result)))
@@ -81,6 +89,7 @@ async def route_generate_model(
         time_elapsed=time_elapsed,
         avg_time=avg_time,
         nrps=nrps,
+        ntps=ntps,
         results=list_result,
         uniques=set_result,
     )

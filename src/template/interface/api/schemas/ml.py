@@ -112,7 +112,7 @@ class InputInference(BaseModel):
     n: int = Field(
         default=...,
         ge=1,
-        le=100,
+        le=1_000,
         description="Number of samples to generate.",
         examples=[10, 25, 1],
     )
@@ -146,6 +146,11 @@ class OutputInference(BaseModel):
         default=...,
         description="Number of Requests Per Second (with `n` argument) achieved during inference.",
         examples=[10, 20, 25],
+    )
+    ntps: int = Field(
+        default=...,
+        description="Number of Tokens Per Second (with `n` argument) achieved during inference.",
+        examples=[100, 200, 250],
     )
     results: list[str] = Field(
         default=...,

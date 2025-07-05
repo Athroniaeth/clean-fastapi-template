@@ -63,7 +63,7 @@ async def create_model(
         tokenizer=tokenizer,
         model=BengioMLP,
     )
-    typer.echo(f"Model '{model_id}' deleted successfully.")
+    typer.echo(f"Model '{model_id}' created successfully.")
 
 
 @cli_ml.command(name="delete")
