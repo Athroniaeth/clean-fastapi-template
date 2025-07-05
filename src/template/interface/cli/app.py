@@ -63,11 +63,11 @@ def _get_workers(expected_workers: Optional[int]) -> Optional[int]:
     """Get the number of workers to use."""
     max_workers = os.cpu_count()
 
-    if not expected_workers:
+    if expected_workers is None:
         logger.info("Uvicorn don't use workers.")
         return None
 
-    if not expected_workers <= 0:
+    if expected_workers == 0:
         logger.info(f"Uvicorn will use all possible hearts ({max_workers})")
         return max_workers
 
@@ -137,7 +137,7 @@ def dev(
     host: str = typer.Option("localhost", envvar="HOST", help="Host to bind the server"),
     port: int = typer.Option(8000, envvar="PORT", help="Port to bind the server"),
     reload: bool = typer.Option(False, envvar="RELOAD", help="Enable auto-reload for development"),
-    workers: Optional[int] = typer.Option(None, envvar="WORKERS", help="Number of workers to use (None for no workers)"),
+    workers: int = typer.Option(None, envvar="WORKERS", help="Number of workers to use (None for no workers)"),
 ):
     """Run the server in development mode."""
     _run(
