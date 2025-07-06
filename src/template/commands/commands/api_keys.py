@@ -3,7 +3,7 @@ from typing import Optional
 
 import typer
 
-from template.core.cli import AsyncTyper
+from template.api.core.cli import AsyncTyper
 
 cli_keys = AsyncTyper(
     name="keys",
@@ -46,7 +46,7 @@ async def create_key(
         is_active (bool): Whether the key is active upon creation.
     """
 
-    from template.interface.api.schemas.api_keys import APIKeyCreate
+    from template.api.schemas.api_keys import APIKeyCreate
 
     async with get_service() as service:
         schema = APIKeyCreate(name=name, description=description, is_active=is_active)

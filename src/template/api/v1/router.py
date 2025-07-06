@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, Form
 
 
-from template.interface.api.auth import get_current_user, AuthService, get_auth_service
+from template.api.auth import get_current_user, AuthService, get_auth_service
 
-from template.interface.api.schemas.users import UserReadResponse, UserCreateSchema
+from template.api.schemas.users import UserReadResponse, UserCreateSchema
 
-from template.interface.api.v1.api_keys import keys_router
+from template.api.v1.api_keys import keys_router
 
-from template.interface.api.v1.ml import models_router
+from template.api.v1.ml import models_router
 
-from template.core.improve import Request
+from template.api.core.improve import Request
 
 index_router = APIRouter(tags=["Utils"])
 api_router = APIRouter(prefix="/api/v1")

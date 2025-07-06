@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, PrivateAttr, ConfigDict
 from pydantic import computed_field
 from starlette import status
 
-from template.core.exceptions import APIException
+from template.api.core.exceptions import APIException
 
 DEFAULT_ROUNDS = 4
 

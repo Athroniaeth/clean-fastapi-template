@@ -8,11 +8,11 @@ from fastapi import (
 )
 
 from template.domain.api_keys import ApiKey
-from template.interface.api.depends import inject_infra_database
+from template.api.depends import inject_infra_database
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.application.api_keys import ApiKeyService
-from template.interface.api.schemas.api_keys import (
+from template.api.schemas.api_keys import (
     APIKeyCreate,
     APIKeyRead,
     APIKeyUpdate,

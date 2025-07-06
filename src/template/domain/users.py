@@ -1,7 +1,7 @@
 from passlib.handlers.bcrypt import bcrypt
 from starlette import status
 
-from template.core.exceptions import APIException
+from template.api.core.exceptions import APIException
 
 
 class UserException(APIException):

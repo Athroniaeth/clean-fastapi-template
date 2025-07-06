@@ -5,7 +5,7 @@ from fastapi.security import APIKeyHeader
 
 from template.application.api_keys import ApiKeyService
 from template.application.ml import MLService
-from template.core.improve import Request
+from template.api.core.improve import Request
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.repositories.api_keys import APIKeyRepository
 from template.infrastructure.repositories.ml import MLMetaRepository, MLBlobRepository

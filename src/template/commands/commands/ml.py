@@ -4,7 +4,7 @@ import typer
 from tqdm import tqdm
 
 
-from template.core.cli import AsyncTyper
+from template.api.core.cli import AsyncTyper
 
 cli_ml = AsyncTyper(
     name="ml",
@@ -47,7 +47,7 @@ async def create_model(
 ):
     """Delete a model from the repository."""
     from template.domain.ml import BengioMLP
-    from template.interface.cli.commands.tokenizer import get_service_tokenizer
+    from template.commands.commands.tokenizer import get_service_tokenizer
 
     service_ml = await get_service_ml()
     service_tokenizer = await get_service_tokenizer()
@@ -107,7 +107,7 @@ async def train_model(
 ):
     """Create a model from a dataset and a tokenizer."""
 
-    from template.interface.cli.commands.dataset import get_service_dataset
+    from template.commands.commands.dataset import get_service_dataset
 
     service_ml = await get_service_ml()
     service_dataset = await get_service_dataset()

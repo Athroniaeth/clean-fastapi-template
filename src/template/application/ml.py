@@ -7,7 +7,7 @@ from torch import nn
 from torch.optim.lr_scheduler import LinearLR
 from torchmetrics.classification import MulticlassAccuracy
 
-from template.core.ml import split_dataset, train_model
+from template.api.core import split_dataset, train_model
 from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
 from template.domain.ml import BengioMLP, ML
 from template.domain.ml import MLMeta

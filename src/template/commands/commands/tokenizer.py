@@ -1,7 +1,7 @@
 import typer
 
-from template.interface.cli.commands.dataset import get_service_dataset
-from template.core.cli import AsyncTyper
+from template.commands.commands.dataset import get_service_dataset
+from template.api.core.cli import AsyncTyper
 
 cli_tokenizer = AsyncTyper(
     name="tokenizer",

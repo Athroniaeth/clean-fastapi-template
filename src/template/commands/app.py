@@ -6,12 +6,12 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from template.interface.cli.commands.api_keys import cli_keys
-from template.interface.cli.commands.dataset import cli_dataset
-from template.interface.cli.commands.ml import cli_ml
-from template.interface.cli.commands.tokenizer import cli_tokenizer
-from template.interface.cli.commands.users import cli_users
-from template.core.cli import AsyncTyper
+from template.commands.commands.api_keys import cli_keys
+from template.commands.commands.dataset import cli_dataset
+from template.commands.commands.ml import cli_ml
+from template.commands.commands.tokenizer import cli_tokenizer
+from template.commands.commands.users import cli_users
+from template.api.core.cli import AsyncTyper
 
 from typing import Callable, AsyncContextManager
 

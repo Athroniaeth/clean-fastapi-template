@@ -10,9 +10,9 @@ from fastapi import (
 from fastapi.params import Query
 from starlette.responses import StreamingResponse
 
-from template.interface.api.depends import get_service_ml
+from template.api.depends import get_service_ml
 
-from template.interface.api.schemas.ml import (
+from template.api.schemas.ml import (
     OutputInference,
     InputInference,
     MetadataTokenizer,

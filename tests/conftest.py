@@ -26,7 +26,7 @@ async def client() -> AsyncIterator[AsyncClient]:
     Notes:
         See: https://github.com/Kludex/fastapi-tips?tab=readme-ov-file#5-use-httpxs-asyncclient-instead-of-testclient
     """
-    from template.interface.api.app import create_app, lifespan
+    from template.api import create_app, lifespan
     from template.settings import Settings
 
     settings = Settings()

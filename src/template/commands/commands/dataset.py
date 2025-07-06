@@ -3,7 +3,7 @@ from typing import List, Optional
 import typer
 
 from template import RAW_DATA_PATH
-from template.core.cli import AsyncTyper
+from template.api.core.cli import AsyncTyper
 
 cli_dataset = AsyncTyper(
     name="dataset",

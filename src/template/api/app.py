@@ -7,15 +7,15 @@ from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
-from template.core.improve import State, FastAPI
+from template.api.core.improve import State, FastAPI
 from template import get_version
-from template.core.exceptions import APIException
+from template.api.core.exceptions import APIException
 
 
 from template.infrastructure.storage.base import AbstractStorageInfra
 from template.infrastructure.database.base import AbstractDatabaseInfra
-from template.interface.api.v1.router import index_router, api_router
-from template.interface.cli.app import Lifespan
+from template.api.v1.router import index_router, api_router
+from template.commands.app import Lifespan
 
 from template.settings import get_settings, Settings, get_storage_infra, get_database_infra
 

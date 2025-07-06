@@ -7,7 +7,7 @@ from starlette.requests import Request as _Request
 
 from template.infrastructure.database.base import AbstractDatabaseInfra
 from template.infrastructure.storage.base import AbstractStorageInfra
-from template.interface.cli.app import Lifespan
+from template.commands import Lifespan
 from template.settings import Settings
 
 
