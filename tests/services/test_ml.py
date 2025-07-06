@@ -3,7 +3,7 @@ from unittest.mock import patch
 import polars
 import pytest
 
-from template.application.ml import MLService
+from template.application.ml import MLService, IntegrityError, NotFoundException
 from template.domain.ml import BengioMLP
 from template.domain.tokenizer import CharTokenizer
 from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
@@ -84,7 +84,7 @@ async def test_list_models(service: MLService):
         model=BengioMLP,
     )
 
-    models = await service.list()
+    models = await service.list_all()
 
     assert len(models) == 2
     assert any(model.meta.id_ == "model1" for model in models)
@@ -160,13 +160,13 @@ async def test_train_model(service: MLService):
 
 async def test_get_non_existent_model(service: MLService):
     """Test getting a non-existent model raises an exception."""
-    with pytest.raises(Exception, match="Model 'non_existent' does not exist."):
+    with pytest.raises(NotFoundException):
         await service.get("non_existent")
 
 
 async def test_delete_non_existent_model(service: MLService):
     """Test deleting a non-existent model raises an exception."""
-    with pytest.raises(Exception):
+    with pytest.raises(NotFoundException):
         await service.delete("non_existent")
 
 
@@ -207,7 +207,7 @@ async def test_integrity_meta_not_found(service: MLService):
     )
 
     # Simulate metadata not being created
-    await service.repo.delete("integrity_meta_test")
+    await service.repo_meta.delete("integrity_meta_test")
 
     with pytest.raises(Exception):
         await service.get("integrity_meta_test")
@@ -226,7 +226,7 @@ async def test_integrity_blob_not_found(service: MLService):
     )
 
     # Simulate blob not being created
-    await service.blob.delete("integrity_test")
+    await service.repo_blob.delete("integrity_test")
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(IntegrityError):
         await service.get("integrity_test")

@@ -3,8 +3,13 @@ from typing import AsyncIterator
 
 import pytest
 
-from template.application.api_keys import ApiKeyService
-from template.domain.api_keys import APIKeyNotFoundException, ApiKey, APIKeyInvalidException, APIKeyNotProvidedException
+from template.application.api_keys import (
+    ApiKeyService,
+    APIKeyNotFoundException,
+    APIKeyNotProvidedException,
+    APIKeyInvalidException,
+)
+from template.domain.api_keys import ApiKey
 from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
 from template.infrastructure.repositories.api_keys import APIKeyRepository
 

@@ -1,26 +1,121 @@
 from datetime import datetime
-from typing import List, Type, AsyncIterator
+from typing import List, Type, AsyncIterator, Any
 
 import polars
 import torch
+from starlette import status
 from torch import nn
 from torch.optim.lr_scheduler import LinearLR
 from torchmetrics.classification import MulticlassAccuracy
 
-from template.api.core import split_dataset, train_model
+from template.api.core.exceptions import APIException
+from template.api.core.ml import split_dataset, train_model
 from template.domain.dataset import DEFAULT_COLUMN_NAME, Dataset
-from template.domain.ml import BengioMLP, ML
-from template.domain.ml import MLMeta
+from template.domain.ml import BengioMLP, ML, MLMeta
 from template.domain.tokenizer import Tokenizer
 from template.infrastructure.repositories.ml import MLMetaRepository, AbstractModelBlob, MLBlobRepository
+
+
+class MLException(APIException):
+    """Base class for ML related exceptions."""
+
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(status_code=status_code, detail=detail)
+        self.status_code = status_code
+        self.detail = detail
+
+
+class NotFoundException(MLException):
+    """Raised when an ML model is not found."""
+
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "API key not found : {key_id}"
+
+    def __init__(self, ml_id: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(key_id=ml_id),
+        )
+
+
+class ParameterException(MLException):
+    """Raised when there is an issue with the parameters provided to the ML model."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Invalid parameters provided for ML model: {message}"
+
+    def __init__(self, message: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(message=message),
+        )
+
+
+class AlreadyExistsException(MLException):
+    """Raised when an ML model already exists in the repository."""
+
+    status_code = status.HTTP_409_CONFLICT
+    detail = "ML model with id '{id_}' already exists."
+
+    def __init__(self, id_: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(id_=id_),
+        )
+
+
+class IntegrityError(MLException):
+    """Raised when there is an integrity error in the ML model.
+
+    Notes:
+        Integrity errors occur when data is inconsistent, such
+        as having an existing model in the metadata but not in
+        the blob storage, or vice versa.
+    """
+
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    detail = "Integrity error: Model '{id_}' has inconsistent data in metadata and blob storage."
+
+    def __init__(self, id_: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(id_=id_),
+        )
 
 
 class MLService:
     """Service for managing datasets (preprocessed raw data)."""
 
     def __init__(self, repo_ml: MLMetaRepository, blob_ml: MLBlobRepository):
-        self.repo = repo_ml
-        self.blob = blob_ml
+        self.repo_meta = repo_ml
+        self.repo_blob = blob_ml
+
+    async def _get(self, id_: str) -> tuple[MLMeta | None, Any | None]:
+        """
+        Get the path of a dataset by its identifier.
+
+        Args:
+            id_ (str): The identifier of the dataset.
+
+        Returns:
+            ML: The ML object containing metadata and blob.
+        """
+        meta = await self.repo_meta.get(id_)
+        blob = await self.repo_blob.get(id_)
+        return meta, blob
+
+    async def exists(self, id_: str) -> bool:
+        """
+        Check if a dataset exists by its identifier.
+
+        Args:
+            id_ (str): The identifier of the dataset.
+
+        Returns:
+            bool: True if the dataset exists, False otherwise.
+        """
+        meta, blob = await self._get(id_)
+        return (meta is not None) and (blob is not None)
 
     async def get(self, id_: str) -> ML:
         """
@@ -32,17 +127,19 @@ class MLService:
         Returns:
             Path: The path of the dataset.
         """
-        meta = await self.repo.get(id_)
+        meta, blob = await self._get(id_)
 
-        if meta is None:
-            raise Exception(f"Model '{id_}' does not exist.")
+        if (meta is not None) and (blob is not None):
+            return ML(meta=meta, blob=blob)
 
-        blob = await self.blob.get(id_)
+        elif (meta is None) and (blob is None):
+            raise NotFoundException(id_)
 
-        if blob is None:
-            raise FileNotFoundError(f"Integrity error: Model '{id_}' exists in metadata but not in blob storage.")
+        elif meta is None:
+            raise NotFoundException(f"{id_} blob storage exists, but metadata does not.")
 
-        return ML(meta=meta, blob=blob)
+        else:
+            raise IntegrityError(f"{id_} metadata exists, but blob storage does not.")
 
     async def create(
         self,
@@ -69,6 +166,8 @@ class MLService:
         Returns:
             Tokenizer: The created dataset (polars DataFrame).
         """
+        if await self.exists(id_):
+            raise AlreadyExistsException(id_)
 
         meta = MLMeta(
             id_=id_,
@@ -82,8 +181,8 @@ class MLService:
             tokenizer=tokenizer,
         )
 
-        await self.blob.create(id_, blob)
-        await self.repo.create(meta)
+        await self.repo_blob.create(id_, blob)
+        await self.repo_meta.create(meta)
         return ML(
             meta=meta,
             blob=blob,
@@ -97,11 +196,13 @@ class MLService:
             id_ (int): The identifier of the dataset.
         """
         # Check existence and integrity before deletion
-        await self.get(id_)
-        await self.blob.delete(id_)
-        await self.repo.delete(id_)
+        if not await self.exists(id_):
+            raise NotFoundException(id_)
 
-    async def list(self) -> List[ML]:
+        await self.repo_blob.delete(id_)
+        await self.repo_meta.delete(id_)
+
+    async def list_all(self) -> List[ML]:
         """
         List all datasets in the repository.
 
@@ -110,8 +211,8 @@ class MLService:
         """
         list_model = []
         generator = zip(
-            await self.repo.list_all(),
-            await self.blob.list_all(),
+            await self.repo_meta.list_all(),
+            await self.repo_blob.list_all(),
         )
         for meta, blob in generator:
             model = ML(meta=meta, blob=blob)
@@ -126,7 +227,7 @@ class MLService:
         Returns:
             list[str]: A list of dataset identifiers (file names without extension).
         """
-        return [meta.id_ for meta in await self.repo.list_all()]
+        return [meta.id_ for meta in await self.repo_meta.list_all()]
 
     async def train(
         self,
@@ -204,8 +305,8 @@ class MLService:
         # Ensure the model is on CPU before saving
         blob = blob.cpu()
 
-        await self.blob.update(id_, blob)
-        await self.repo.update(meta)
+        await self.repo_blob.update(id_, blob)
+        await self.repo_meta.update(meta)
         return ML(
             meta=meta,
             blob=blob,
@@ -344,7 +445,7 @@ class MLService:
         have_top_p = top_p != 1.0
 
         if have_top_k and have_top_p:
-            raise ValueError("You must choose either top_p or top_k, not both.")
+            raise ParameterException("top_k must be 0 if top_p is not 1.0, or vice versa.")
 
         blob.eval()
         device = blob.device
@@ -375,9 +476,9 @@ class MLService:
             # Filter logits with temperature, top_k, and top_p
             filtered_logits = self._filter_logits(
                 last_position_logits,
-                temperature,
-                top_k,
-                top_p,
+                temperature=temperature,
+                top_k=top_k,
+                top_p=top_p,
             )
 
             probs = torch.softmax(filtered_logits, dim=-1)  # (1, vocab)

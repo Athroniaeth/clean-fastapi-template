@@ -47,7 +47,7 @@ async def create_model(
 ):
     """Delete a model from the repository."""
     from template.domain.ml import BengioMLP
-    from template.commands.commands.tokenizer import get_service_tokenizer
+    from template.commands.tokenizer import get_service_tokenizer
 
     service_ml = await get_service_ml()
     service_tokenizer = await get_service_tokenizer()
@@ -79,7 +79,7 @@ async def delete_model(identifier: str = typer.Argument(..., help="Model identif
 async def list_models():
     """List available models from the repository."""
     service_ml = await get_service_ml()
-    models = await service_ml.list()
+    models = await service_ml.list_all()
     if not models:
         typer.echo("No models found.")
     else:
@@ -107,7 +107,7 @@ async def train_model(
 ):
     """Create a model from a dataset and a tokenizer."""
 
-    from template.commands.commands.dataset import get_service_dataset
+    from template.commands.dataset import get_service_dataset
 
     service_ml = await get_service_ml()
     service_dataset = await get_service_dataset()

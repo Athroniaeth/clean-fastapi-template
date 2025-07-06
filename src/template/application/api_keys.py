@@ -1,8 +1,58 @@
-import time
 from typing import Sequence, Optional
 
-from template.domain.api_keys import APIKeyNotFoundException, APIKeyNotProvidedException, APIKeyInvalidException, ApiKey
+from starlette import status
+
+from template.api.core.exceptions import APIException
+from template.domain.api_keys import ApiKey
 from template.infrastructure.repositories.api_keys import APIKeyRepository
+
+
+class APIKeyException(APIException):
+    """Base class for API key-related exceptions."""
+
+    def __init__(self, status_code: int, detail: str):
+        super().__init__(status_code=status_code, detail=detail)
+        self.status_code = status_code
+        self.detail = detail
+
+
+class APIKeyNotFoundException(APIKeyException):
+    """Raised when an API key is not found in the database."""
+
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "API key not found : {key_id}"
+
+    def __init__(self, key_id: int):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(key_id=key_id),
+        )
+
+
+class APIKeyNotProvidedException(APIKeyException):
+    """Raised when an API key is not provided in the request."""
+
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "API key not provided in the request."
+
+    def __init__(self):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail,
+        )
+
+
+class APIKeyInvalidException(APIKeyException):
+    """Raised when an API key is invalid or does not match any stored keys."""
+
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Invalid API key provided : {raw_key}"
+
+    def __init__(self, raw_key: str):
+        super().__init__(
+            status_code=self.status_code,
+            detail=self.detail.format(raw_key=raw_key),
+        )
 
 
 class ApiKeyService:
@@ -83,17 +133,14 @@ class ApiKeyService:
         Returns:
             ApiKey: the created key + its raw plain_key.
         """
-        time_elapsed = time.time()
         api_key = ApiKey.create(
             name=name,
             description=description,
             is_active=is_active,
         )
-        print(f"\tKey created (pydantic) in {time.time() - time_elapsed:.2f} seconds")
+
         # Persist the model
-        api_key = await self._repo.create(api_key)
-        print(f"\tKey persisted in {time.time() - time_elapsed:.2f} seconds")
-        return api_key
+        return await self._repo.create(api_key)
 
     async def update(self, api_key: ApiKey) -> ApiKey:
         """
@@ -165,7 +212,7 @@ class ApiKeyService:
 
         keys = await self._repo.list_all(active_only=True)
 
-        # Todo : Create a custom repo query for this (return boolean)
+        # Todo : Create a custom repo_meta query for this (return boolean)
         # And this method will check the boolean, and raise an exception if False
         for key in keys:
             if key.check_key(raw_key):

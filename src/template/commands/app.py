@@ -6,11 +6,11 @@ from typing import Annotated, Optional
 import typer
 from loguru import logger
 
-from template.commands.commands.api_keys import cli_keys
-from template.commands.commands.dataset import cli_dataset
-from template.commands.commands.ml import cli_ml
-from template.commands.commands.tokenizer import cli_tokenizer
-from template.commands.commands.users import cli_users
+from template.commands.api_keys import cli_keys
+from template.commands.dataset import cli_dataset
+from template.commands.ml import cli_ml
+from template.commands.tokenizer import cli_tokenizer
+from template.commands.users import cli_users
 from template.api.core.cli import AsyncTyper
 
 from typing import Callable, AsyncContextManager
@@ -133,7 +133,7 @@ def callback(level: LoggingLevel = Level.INFO):
 
 @cli.command()
 def dev(
-    source: str = typer.Option("template.interface.api.app:factory_app"),
+    source: str = typer.Option("template.api.app:factory_app"),
     host: str = typer.Option("localhost", envvar="HOST", help="Host to bind the server"),
     port: int = typer.Option(8000, envvar="PORT", help="Port to bind the server"),
     reload: bool = typer.Option(False, envvar="RELOAD", help="Enable auto-reload for development"),
