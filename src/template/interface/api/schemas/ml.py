@@ -83,7 +83,7 @@ class MetadataML(BaseModel):
 class InputInference(BaseModel):
     """Input data for inference."""
 
-    start_tokens: str = Field(
+    prompt: str = Field(
         default="",
         description="Initial tokens to start the generation.",
         examples=["", "Paris", "New York"],

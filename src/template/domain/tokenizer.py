@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Self, Sequence, List
@@ -29,6 +27,11 @@ class Tokenizer(ABC):
     def sos_index(self) -> int:
         """Return the index of the start of sequence token."""
         return self.token_to_index[self.sos_token]
+
+    @property
+    def eos_index(self) -> int:
+        """Return the index of the end of sequence token."""
+        return self.token_to_index[self.eos_token]
 
     @classmethod
     @abstractmethod

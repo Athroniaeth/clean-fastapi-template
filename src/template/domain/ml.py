@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
@@ -43,8 +41,6 @@ class AbstractModelBlob(ABC, nn.Module):
         d_hidden: int,
         n_context: int,
         tokenizer: Tokenizer,
-        *args,
-        **kwargs,
     ):
         """
         Initialize the NLP model with the given parameters.
@@ -68,70 +64,6 @@ class AbstractModelBlob(ABC, nn.Module):
         """Forward pass of the model given input indices."""
         raise NotImplementedError("Subclasses must implement forward method.")
 
-    def generate_city_name(
-        self,
-        start_tokens: str = "",
-        max_length: int = 30,
-        temperature: float = 1.0,
-        top_k: int = 0,
-        top_p: float = 1.0,
-    ):
-        temperature = max(temperature, 1e-6)
-        self.eval()
-        device = self.device
-
-        current_input = torch.tensor([[self.tokenizer.sos_index]], device=device)
-
-        if start_tokens:
-            start_tokens_encoded = self.tokenizer.encode(start_tokens)
-            start_tokens_tensor = torch.tensor([start_tokens_encoded], device=device)
-            current_input = torch.cat([current_input, start_tokens_tensor], dim=1)
-            generated_indices = [self.tokenizer.sos_index] + start_tokens_encoded
-        else:
-            generated_indices = [self.tokenizer.sos_index]
-
-        with torch.no_grad():
-            for _ in range(max_length):
-                logits = self(current_input)[:, -1, :]  # (batch_size, vocab_size)
-                logits = logits / temperature
-
-                # Apply top-k filtering
-                if top_k > 0:
-                    top_k_values, top_k_indices = torch.topk(logits, top_k)
-                    mask = torch.full_like(logits, float("-inf"))
-                    logits = mask.scatter(1, top_k_indices, top_k_values)
-
-                # Apply top-p (nucleus) filtering
-                if top_p < 1.0:
-                    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-                    probs = F.softmax(sorted_logits, dim=-1)
-                    cumulative_probs = torch.cumsum(probs, dim=-1)
-
-                    sorted_mask = cumulative_probs > top_p
-                    # Shift mask right to include at least one token
-                    sorted_mask[..., 1:] = sorted_mask[..., :-1].clone()
-                    sorted_mask[..., 0] = 0
-
-                    sorted_logits[sorted_mask] = float("-inf")
-                    logits = logits.scatter(1, sorted_indices, sorted_logits)
-
-                probs = F.softmax(logits, dim=-1)
-                next_token = torch.multinomial(probs, 1).item()
-
-                if next_token == self.tokenizer.token_to_index[self.tokenizer.eos_token]:
-                    break
-
-                generated_indices.append(next_token)
-
-                next_token_tensor = torch.tensor([[next_token]], device=device)
-                current_input = torch.cat([current_input, next_token_tensor], dim=1)
-
-                if current_input.size(1) > self.n_context:
-                    current_input = current_input[:, -self.n_context :]
-
-        generated_chars = self.tokenizer.decode(generated_indices[1:])  # Skip SOS
-        return "".join(generated_chars)
-
 
 class BengioMLP(AbstractModelBlob):
     def __init__(
@@ -148,8 +80,6 @@ class BengioMLP(AbstractModelBlob):
             tokenizer=tokenizer,
         )
 
-        self.n_context = n_context
-
         self.len_vocab = len(tokenizer.vocab)
         self.embed = nn.Embedding(self.len_vocab, d_model)
 
@@ -157,33 +87,38 @@ class BengioMLP(AbstractModelBlob):
         self.fc2 = nn.Linear(d_hidden, self.len_vocab)
 
     def forward(self, idx: torch.Tensor) -> torch.Tensor:
-        # Create a list to store context embeddings
-        context_tokens = []
+        """Forward pass of the model."""
+        B, L = idx.shape
 
-        # For each position in the context window
-        for i in range(self.n_context):
-            if i == 0:
-                # Current token
-                context_tokens.append(self.embed(idx))  # (B, L, d_model)
-            else:
-                # Get previous tokens by shifting
-                shifted_idx = torch.roll(idx, shifts=i, dims=1)
-                # Replace the first i positions with SOS token
-                shifted_idx[:, :i] = self.tokenizer.sos_index
-                context_tokens.append(self.embed(shifted_idx))
+        # Pad the sequence on the left to create context for the initial tokens.
+        # We need n_context - 1 padding tokens.
+        padded_idx = F.pad(idx, (self.n_context - 1, 0), value=self.tokenizer.sos_index)
 
-        # Concatenate all embeddings along the last dimension
-        x = torch.cat(context_tokens, dim=-1)  # (B, L, n_context*d_model)
+        # Create sliding windows of size `n_context`.
+        # Unfold creates a view of the tensor without copying data, which is very efficient.
+        context_idx = padded_idx.unfold(dimension=1, size=self.n_context, step=1)  # (B, L, n_context)
 
-        # Process through MLP
-        x = F.tanh(self.fc1(x))  # (B, L, d_hidden)
+        # Unfold gives [..., embed(t-1), embed(t)], we can flip to match the original order.
+        # Flip the context_idx to match the original order.
+        context_idx = torch.flip(context_idx, dims=[-1])
+
+        # Get embeddings for all context windows at once.
+        embedded_context = self.embed(context_idx)  # (B, L, n_context, d_model)
+
+        # Reshape the embeddings to match the linear layer's input.
+        # We combine the context and embedding dimensions.
+        # Shape: (B, L, n_context * d_model)
+        x = embedded_context.view(B, L, self.n_context * self.d_model)
+
+        # Apply the first linear layer and activation function.
+        x = torch.tanh(self.fc1(x))  # (B, L, d_hidden)
         logits = self.fc2(x)  # (B, L, vocab_size)
 
         return logits
 
 
 @dataclass
-class Model:
+class ML:
     """Model class that extends ModelMeta with blob pytorch model.
 
     Attributes:

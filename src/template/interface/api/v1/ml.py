@@ -60,11 +60,12 @@ async def route_generate_model(
     ml = await service.get(id_)
 
     for _ in range(inference.n):
-        result = ml.blob.generate_city_name(
-            start_tokens=inference.start_tokens,
+        result = await service.generate(
+            blob=ml.blob,
+            top_p=inference.top_p,
+            prompt=inference.prompt,
             max_length=inference.max_length,
             temperature=inference.temperature,
-            top_p=inference.top_p,
         )
         list_result.append(result)
 
@@ -76,7 +77,7 @@ async def route_generate_model(
     nrps = math.trunc(inference.n / time_elapsed)
 
     nbr_output_tokens = sum(len(result) for result in list_result)
-    nbr_output_tokens = nbr_output_tokens - len(inference.start_tokens) * inference.n
+    nbr_output_tokens = nbr_output_tokens - len(inference.prompt) * inference.n
 
     # Calculate "Number of Tokens Per Second" (NTPS)
     ntps = math.trunc(nbr_output_tokens / time_elapsed)
