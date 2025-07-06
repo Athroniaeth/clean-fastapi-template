@@ -83,10 +83,31 @@ class MetadataML(BaseModel):
 class InputInference(BaseModel):
     """Input data for inference."""
 
+    n: int = Field(
+        default=...,
+        ge=1,
+        le=1_000,
+        description="Number of samples to generate.",
+        examples=[10, 25, 1],
+    )
     prompt: str = Field(
         default="",
         description="Initial tokens to start the generation.",
         examples=["", "Paris", "New York"],
+    )
+    top_p: float = Field(
+        default=...,
+        ge=0.0,
+        le=1.0,
+        description="Top-p (nucleus) filtering parameter for controlling diversity in generation.",
+        examples=[0.95, 1.0, 0.1],
+    )
+    top_k: int = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Top-k filtering parameter for controlling diversity in generation. If 0, no top-k filtering is applied.",
+        examples=[0, 10, 50],
     )
     max_length: int = Field(
         default=30,
@@ -101,20 +122,6 @@ class InputInference(BaseModel):
         lt=10.0,
         description="Sampling temperature for controlling randomness in generation.",
         examples=[0.6, 2.0, 0],
-    )
-    top_p: float = Field(
-        default=...,
-        ge=0.0,
-        le=1.0,
-        description="Top-p (nucleus) filtering parameter for controlling diversity in generation.",
-        examples=[0.95, 1.0, 0.1],
-    )
-    n: int = Field(
-        default=...,
-        ge=1,
-        le=1_000,
-        description="Number of samples to generate.",
-        examples=[10, 25, 1],
     )
 
 

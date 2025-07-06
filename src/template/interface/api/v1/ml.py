@@ -8,6 +8,7 @@ from fastapi import (
     status,
 )
 from fastapi.params import Query
+from starlette.responses import StreamingResponse
 
 from template.interface.api.depends import get_service_ml
 
@@ -63,11 +64,12 @@ async def route_generate_model(
         result = await service.generate(
             blob=ml.blob,
             top_p=inference.top_p,
+            top_k=inference.top_k,
             prompt=inference.prompt,
             max_length=inference.max_length,
             temperature=inference.temperature,
         )
-        list_result.append(result)
+        list_result.append(f"{inference.prompt}{result}")
 
     time_end = time.perf_counter()
     time_elapsed = round(time_end - time_start, 4)
@@ -93,4 +95,59 @@ async def route_generate_model(
         ntps=ntps,
         results=list_result,
         uniques=set_result,
+    )
+
+
+@models_router.post(
+    "/{id_}/stream",
+    summary="Token-by-token generation stream",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "Flow of generated tokens using Server-Sent Events (SSE).",
+            "content": {
+                "text/event-stream": {
+                    "examples": {
+                        "exemple": {
+                            "summary": "Exemple de flux",
+                            "value": ("data: B\n\ndata: o\n\ndata: i\n\nevent: end\ndata: Stream finished\n\n"),
+                        }
+                    },
+                    # Specify the media type for SSE
+                    "schema": {"type": "string", "format": "binary"},
+                }
+            },
+        }
+    },
+)
+async def stream_tokens(
+    id_: Annotated[str, SelectModel],
+    inference: Annotated[InputInference, Query],
+    service: Annotated[MLService, Depends(get_service_ml)],
+):
+    """Stream tokens from a model using Server-Sent Events (SSE)."""
+    ml = await service.get(id_)
+    blob = ml.blob  # alias plus court
+
+    # Transform async generator for SSE
+    async def sse_event_generator():
+        async for token_id in service.stream(
+            blob=blob,
+            prompt=inference.prompt,
+            top_k=inference.top_k,
+            top_p=inference.top_p,
+            max_len=inference.max_length,
+            temperature=inference.temperature,
+        ):
+            # In SSE format, each message must be prefixed
+            # with "data: " and end with a double newline
+            token_text = blob.tokenizer.decode([token_id])
+            yield f"data: {token_text[0]}\n\n"
+
+        # Indicate the end of the stream
+        yield "event: end\ndata: Stream finished\n\n"
+
+    return StreamingResponse(
+        sse_event_generator(),
+        media_type="text/event-stream",
     )

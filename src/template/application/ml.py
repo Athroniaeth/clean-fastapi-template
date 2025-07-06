@@ -293,7 +293,7 @@ class MLService:
         eos_idx = blob.tokenizer.eos_index
         tokens = [blob.tokenizer.sos_index]  # Start with the SOS token
 
-        async for next_token in self._generate(
+        async for next_token in self.stream(
             blob=blob,
             prompt=prompt,
             top_k=top_k,
@@ -314,7 +314,7 @@ class MLService:
         return generated_name
 
     @torch.no_grad()
-    async def _generate(
+    async def stream(
         self,
         blob: AbstractModelBlob,
         prompt: str = "",
@@ -386,4 +386,7 @@ class MLService:
 
             tokens.append(next_token)
 
+            # If the next token is the end of sequence token, stop generating
+            if next_token == tokenizer.eos_index:
+                break
             yield next_token
