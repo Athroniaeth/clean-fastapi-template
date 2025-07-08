@@ -29,7 +29,7 @@ class NotFoundException(MLException):
     """Raised when an ML model is not found."""
 
     status_code = status.HTTP_404_NOT_FOUND
-    detail = "API key not found : {key_id}"
+    detail = "Model not found : {key_id}"
 
     def __init__(self, ml_id: str):
         super().__init__(

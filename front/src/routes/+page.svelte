@@ -1,68 +1,79 @@
-<script lang="ts">
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcomeFallback from '$lib/images/svelte-welcome.png';
-
-  import { Alert } from "flowbite-svelte";
+<script>
 </script>
 
-<div class="p-8">
-  <Alert>
-    <span class="font-medium">Info alert!</span>
-    Change a few things up and try submitting again.
-  </Alert>
+<!-- src/routes/+page.svelte -->
+
+<div class="container">
+  <div class="header">Header</div>
+  <div class="models">Models</div>
+  <div class="panel">Panel</div>
+  <div class="parameters">Parameters</div>
+  <div class="history">History</div>
+  <div class="footer">Footer</div>
 </div>
 
-<svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
-</svelte:head>
-
-<section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcomeFallback} alt="Welcome" />
-			</picture>
-		</span>
-
-		to your new<br />SvelteKit app
-	</h1>
-
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
-
-	<Counter />
-</section>
-
 <style>
-	section {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		flex: 0.6;
-	}
+  /*
+    Règle globale pour s'assurer que le layout prend 100% de l'écran.
+    On retire les marges par défaut du navigateur.
+  */
+  :global(html, body) {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: sans-serif;
+  }
 
-	h1 {
-		width: 100%;
-	}
+  .container {
+    /* Dimensions pour occuper tout l'écran */
+    height: 100vh; /* 100% de la hauteur de la fenêtre (viewport height) */
+    width: 100vw;  /* 100% de la largeur de la fenêtre (viewport width) */
 
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
+    /* Activation de la grille CSS */
+    display: grid;
 
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
-	}
+    /* Définition des colonnes (6 colonnes) */
+    /* Les valeurs sont une interprétation pour correspondre à l'image */
+    grid-template-columns: 0.5fr 3fr 0.5fr 8fr 0.5fr 4fr 0.5fr 3fr 0.5fr;
+
+    /* Définition des lignes (5 lignes) */
+    grid-template-rows: 1fr 2fr 2fr 2fr 1fr;
+
+    /* C'est ici la magie : on nomme et on place les zones */
+    /* Le "." représente une cellule de grille vide */
+  grid-template-areas:
+    "header header header header header header header header header"
+    ". models . panel . parameters . history ."
+    ". models . panel . parameters . history ."
+    ". models . panel . parameters . history ."
+    "footer footer footer footer footer footer footer footer footer";
+
+    /* Un peu d'espacement pour mieux visualiser les zones */
+    /* gap: 5px; */
+    background-color: #333; /* Couleur de fond pour les espaces (gap) */
+  }
+
+  /* --- Assignation des éléments à leurs zones --- */
+  .header     { grid-area: header; }
+  .models     { grid-area: models; }
+  .panel      { grid-area: panel; }
+  .parameters { grid-area: parameters; }
+  .history    { grid-area: history; }
+  .footer     { grid-area: footer; }
+
+  /* --- Style visuel pour la démonstration --- */
+  .container > div {
+    display: grid;
+    place-items: center; /* Centre le texte */
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+
+  .header     { background-color: #0077b6; }
+  .models     { background-color: #9d4edd; }
+  .panel      { background-color: #2a9d8f; }
+  .parameters { background-color: #e9c46a; }
+  .history    { background-color: #f4a261; }
+  .footer     { background-color: #e76f51; }
 </style>
