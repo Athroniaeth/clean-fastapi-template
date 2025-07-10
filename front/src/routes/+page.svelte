@@ -2,6 +2,7 @@
     import ModelRadio from "./ModelRadio.svelte";
     import {GradientButton, Input, Label, Spinner} from "flowbite-svelte";
     import {AnnotationSolid} from "flowbite-svelte-icons";
+    import ParameterSlider from "$lib/components/ParameterSlider.svelte";
 
     let selectedModel = 'communes:v1';
     let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
@@ -54,89 +55,56 @@
     </div>
     <div class="parameters p-5">
         <!-- Temperature -->
-        <div class="mb-4">
-            <div class="text-sm">
-                <Label for="temperature-range" class=" block">
-                    Temperature : {temperature.toFixed(2)}
-                </Label>
-            </div>
-            <Input
-                    id="temperature-range"
-                    type="range"
-                    min="0"
-                    max="3"
-                    step="0.05"
-                    bind:value={temperature}
-            />
-        </div>
+        <ParameterSlider
+                id="temperature-range"
+                label="Temperature"
+                min={0}
+                max={3}
+                step={0.01}
+                bind:value={temperature}
+                round={true}
+        />
 
         <!-- Top P -->
-        <div class="mb-4">
-            <div class="text-sm">
-                <Label for="top-p-range" class="block">
-                    Top Probability (Top P) : {topP.toFixed(2)}
-                </Label>
-            </div>
-            <Input
-                    id="top-p-range"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    bind:value={topP}
-            />
-        </div>
+        <ParameterSlider
+                id="top-p-range"
+                label="Top P"
+                min={0}
+                max={1}
+                step={0.01}
+                bind:value={topP}
+        />
 
         <!-- Top K -->
-        <div class="mb-4">
-            <div class="text-sm">
-                <Label for="top-k-range" class="block">
-                    Top samples (Top K) : {topK}
-                </Label>
-            </div>
-            <Input
-                    id="top-k-range"
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="1"
-                    bind:value={topK}
-            />
-        </div>
+        <ParameterSlider
+                id="top-k-range"
+                label="Top K"
+                min={0}
+                max={100}
+                step={1}
+                bind:value={topK}
+                round={true}
+        />
 
         <!-- Max Tokens -->
-        <div class="mb-4">
-            <div class="text-sm">
-                <Label for="max-tokens-range" class="block">
-                    Max Tokens : {maxTokens}
-                </Label>
-            </div>
-            <Input
-                    id="max-tokens-range"
-                    type="range"
-                    min="1"
-                    max="100"
-                    step="1"
-                    bind:value={maxTokens}
-            />
-        </div>
+        <ParameterSlider
+                id="max-tokens-range"
+                label="Max Tokens"
+                min={1}
+                max={1000}
+                step={1}
+                bind:value={maxTokens}
+        />
 
         <!-- N Responses -->
-        <div class="mb-4">
-            <div>
-                <Label for="n-responses-range" class="block">
-                    Number of generation (n) : {nResponses}
-                </Label>
-            </div>
-            <Input
-                    id="n-responses-range"
-                    type="range"
-                    min="1"
-                    max="100"
-                    step="1"
-                    bind:value={nResponses}
-            />
-        </div>
+        <ParameterSlider
+                id="n-responses-range"
+                label="N Responses"
+                min={1}
+                max={10}
+                step={1}
+                bind:value={nResponses}
+        />
     </div>
     <div class="history">History</div>
     <div class="footer">Footer</div>
