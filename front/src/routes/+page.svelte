@@ -1,24 +1,49 @@
 <script>
     import ModelRadio from "./ModelRadio.svelte";
+    import {GradientButton,Spinner, Button, Input, Label} from "flowbite-svelte";
+  import { AnnotationSolid, ArrowRightOutline, CartSolid } from "flowbite-svelte-icons";
     let selectedModel = 'communes:v1';
+    let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
 </script>
 
 <!-- src/routes/+page.svelte -->
 
 <div class="container">
     <div class="header">Header</div>
-    <div class="models" style="margin-top: 15px;">
+    <div class="models" style="padding-top: 15px;">
 
         <ModelRadio bind:group={selectedModel} value="communes:v1" description="French town names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="communes:v2" description="French town names" ></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="communes:v3" description="French town names" ></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v1" description="French first names" ></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v2" description="French first names" ></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v3" description="French first names" ></ModelRadio>
+        <ModelRadio bind:group={selectedModel} value="communes:v2" description="French town names"></ModelRadio>
+        <ModelRadio bind:group={selectedModel} value="communes:v3" description="French town names"></ModelRadio>
+        <ModelRadio bind:group={selectedModel} value="prénom:v1" description="French first names"></ModelRadio>
+        <ModelRadio bind:group={selectedModel} value="prénom:v2" description="French first names"></ModelRadio>
+        <ModelRadio bind:group={selectedModel} value="prénom:v3" description="French first names"></ModelRadio>
 
 
     </div>
-    <div class="panel">Panel</div>
+
+    <div class="panel" style="padding-top: 15px;padding-left: 30px;padding-right: 30px;">
+        <div class="mb-6">
+            <Label for="default-input" class="mb-2 block">Start-text</Label>
+            <Input id="default-input" placeholder="Default input"/>
+        </div>
+        <div class="max-h-85 overflow-y-auto border border-gray-200 p-4">
+            <ul class="space-y-2">
+                {#each items as item}
+                    <li class="px-2 py-1 bg-gray-50 rounded">{item}</li>
+                {/each}
+            </ul>
+        </div>
+        <div class="flex mt-7">
+            <GradientButton class="mr-6" color="blue">
+                <Spinner class="me-3" size="4" color="gray" />
+                Loading ...
+            </GradientButton>
+            <GradientButton class="mr-6" color="blue">
+  Choose Plan <AnnotationSolid class="ms-2 h-5 w-5" />
+            </GradientButton>
+        </div>
+    </div>
     <div class="parameters">Parameters</div>
     <div class="history">History</div>
     <div class="footer">Footer</div>
@@ -62,7 +87,7 @@
 
         /* Un peu d'espacement pour mieux visualiser les zones */
         /* gap: 5px; */
-        background-color: whitesmoke; /* Couleur de fond pour les espaces (gap) */
+        background-color: #f2f5ff; /* Couleur de fond pour les espaces (gap) */
     }
 
     /* --- Assignation des éléments à leurs zones --- */
@@ -94,9 +119,9 @@
     .container > div {
         /* display: grid; */
         /* place-items: center; /* Centre le texte */
-        color: white;
+        /* color: black; */
         font-size: 1rem;
-        font-weight: bold;
+        font-weight: normal;
     }
 
     .header {
@@ -104,11 +129,12 @@
     }
 
     .models {
-        /* background-color: #9d4edd; */
+        background-color: white;
+        place-items: center;
     }
 
     .panel {
-        background-color: #2a9d8f;
+        background-color: white;
     }
 
     .parameters {
