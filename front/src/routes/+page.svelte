@@ -8,10 +8,18 @@
         GradientButton,
         Input,
         Label,
+        Navbar,
+        NavBrand,
+        NavHamburger,
+        NavLi,
+        NavUl,
         Spinner
     } from "flowbite-svelte";
+    import {page} from "$app/state";
     import {AnnotationSolid} from "flowbite-svelte-icons";
     import ParameterSlider from "$lib/components/ParameterSlider.svelte";
+
+    let activeUrl = $derived(page.url.pathname);
 
     let selectedModel = 'communes:v1';
     let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
@@ -26,7 +34,22 @@
 <!-- src/routes/+page.svelte -->
 
 <div class="container">
-    <div class="header">Header</div>
+    <div class="header">
+        <Navbar>
+            <NavBrand href="/">
+                <img src="/logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo"/>
+                <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+            </NavBrand>
+            <NavHamburger/>
+            <NavUl {activeUrl}>
+                <NavLi href="/">Home</NavLi>
+                <NavLi href="/navbar">Navbar</NavLi>
+                <NavLi href="/accordion">Accordion</NavLi>
+                <NavLi href="/alert">Alert</NavLi>
+                <NavLi href="/avatar">Avatar</NavLi>
+            </NavUl>
+        </Navbar>
+    </div>
     <div class="models" style="padding-top: 15px;">
 
         <ModelRadio bind:group={selectedModel} value="communes:v1" description="French town names"></ModelRadio>
@@ -227,7 +250,7 @@
     }
 
     .header {
-        background-color: #0077b6;
+        background-color: white;
     }
 
     .models {
