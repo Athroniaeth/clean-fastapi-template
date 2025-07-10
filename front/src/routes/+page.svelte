@@ -1,6 +1,15 @@
 <script>
     import ModelRadio from "./ModelRadio.svelte";
-    import {GradientButton, Input, Label, Spinner} from "flowbite-svelte";
+    import {
+        Footer,
+        FooterCopyright,
+        FooterLink,
+        FooterLinkGroup,
+        GradientButton,
+        Input,
+        Label,
+        Spinner
+    } from "flowbite-svelte";
     import {AnnotationSolid} from "flowbite-svelte-icons";
     import ParameterSlider from "$lib/components/ParameterSlider.svelte";
 
@@ -107,27 +116,39 @@
         />
     </div>
     <div class="history">
-        <div class="max-h-137 overflow-y-auto border border-gray-200 p-4 ">
+        <div class="max-h-130 overflow-y-auto border border-gray-200 p-4 ">
             <ul>
                 {#each items.slice(0, 6) as item}
                     <div class="mb-4">
-                    <li class="px-2 py-1 bg-gray-50 rounded">
-                        "{item}"
-                    </li>
-                    <ul class="ml-4 p-1">
-                        {#each items.slice(0, 6) as item}
-                            <li>
-                                - "{item}"
-                            </li>
-                        {/each}
-                    </ul>
+                        <li class="px-2 py-1 bg-gray-50 rounded">
+                            "{item}"
+                        </li>
+                        <ul class="ml-4 p-1">
+                            {#each items.slice(0, 6) as item}
+                                <li>
+                                    - "{item}"
+                                </li>
+                            {/each}
+                        </ul>
                     </div>
                 {/each}
 
             </ul>
         </div>
     </div>
-    <div class="footer">Footer</div>
+    <div class="footer">
+        <Footer class="mt-3">
+            <FooterCopyright href="/" by="Athroniaeth" year={2025}>
+                All rights reserved.
+            </FooterCopyright>
+            <FooterLinkGroup class="mt-3 flex flex-wrap items-center text-sm  sm:mt-0 ">
+                <FooterLink href="/">About</FooterLink>
+                <FooterLink href="/">Privacy Policy</FooterLink>
+                <FooterLink href="/">Licensing</FooterLink>
+                <FooterLink href="/">Contact</FooterLink>
+            </FooterLinkGroup>
+        </Footer>
+    </div>
 </div>
 
 <style>
@@ -227,6 +248,6 @@
     }
 
     .footer {
-        background-color: #e76f51;
+        background-color: whitesmoke;
     }
 </style>
