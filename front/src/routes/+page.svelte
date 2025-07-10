@@ -1,9 +1,16 @@
 <script>
     import ModelRadio from "./ModelRadio.svelte";
-    import {GradientButton,Spinner, Button, Input, Label} from "flowbite-svelte";
-  import { AnnotationSolid, ArrowRightOutline, CartSolid } from "flowbite-svelte-icons";
+    import {GradientButton, Input, Label, Spinner} from "flowbite-svelte";
+    import {AnnotationSolid} from "flowbite-svelte-icons";
+
     let selectedModel = 'communes:v1';
     let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
+
+    let temperature = 1;
+    let topP = 0.95;
+    let topK = 0;  // Disabled by default
+    let maxTokens = 30;
+    let nResponses = 5;
 </script>
 
 <!-- src/routes/+page.svelte -->
@@ -36,15 +43,101 @@
         </div>
         <div class="flex mt-7">
             <GradientButton class="mr-6" color="blue">
-                <Spinner class="me-3" size="4" color="gray" />
+                <Spinner class="me-3" size="4" color="gray"/>
                 Loading ...
             </GradientButton>
             <GradientButton class="mr-6" color="blue">
-  Choose Plan <AnnotationSolid class="ms-2 h-5 w-5" />
+                Choose Plan
+                <AnnotationSolid class="ms-2 h-5 w-5"/>
             </GradientButton>
         </div>
     </div>
-    <div class="parameters">Parameters</div>
+    <div class="parameters p-5">
+        <!-- Temperature -->
+        <div class="mb-4">
+            <div class="text-sm">
+                <Label for="temperature-range" class=" block">
+                    Temperature : {temperature.toFixed(2)}
+                </Label>
+            </div>
+            <Input
+                    id="temperature-range"
+                    type="range"
+                    min="0"
+                    max="3"
+                    step="0.05"
+                    bind:value={temperature}
+            />
+        </div>
+
+        <!-- Top P -->
+        <div class="mb-4">
+            <div class="text-sm">
+                <Label for="top-p-range" class="block">
+                    Top Probability (Top P) : {topP.toFixed(2)}
+                </Label>
+            </div>
+            <Input
+                    id="top-p-range"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    bind:value={topP}
+            />
+        </div>
+
+        <!-- Top K -->
+        <div class="mb-4">
+            <div class="text-sm">
+                <Label for="top-k-range" class="block">
+                    Top samples (Top K) : {topK}
+                </Label>
+            </div>
+            <Input
+                    id="top-k-range"
+                    type="range"
+                    min="0"
+                    max="10"
+                    step="1"
+                    bind:value={topK}
+            />
+        </div>
+
+        <!-- Max Tokens -->
+        <div class="mb-4">
+            <div class="text-sm">
+                <Label for="max-tokens-range" class="block">
+                    Max Tokens : {maxTokens}
+                </Label>
+            </div>
+            <Input
+                    id="max-tokens-range"
+                    type="range"
+                    min="1"
+                    max="100"
+                    step="1"
+                    bind:value={maxTokens}
+            />
+        </div>
+
+        <!-- N Responses -->
+        <div class="mb-4">
+            <div>
+                <Label for="n-responses-range" class="block">
+                    Number of generation (n) : {nResponses}
+                </Label>
+            </div>
+            <Input
+                    id="n-responses-range"
+                    type="range"
+                    min="1"
+                    max="100"
+                    step="1"
+                    bind:value={nResponses}
+            />
+        </div>
+    </div>
     <div class="history">History</div>
     <div class="footer">Footer</div>
 </div>
@@ -138,7 +231,7 @@
     }
 
     .parameters {
-        background-color: #e9c46a;
+        background-color: white;
     }
 
     .history {
