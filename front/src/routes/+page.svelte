@@ -48,7 +48,7 @@
                 Loading ...
             </GradientButton>
             <GradientButton class="mr-6" color="blue">
-                Choose Plan
+                Generate
                 <AnnotationSolid class="ms-2 h-5 w-5"/>
             </GradientButton>
         </div>
@@ -106,7 +106,27 @@
                 bind:value={nResponses}
         />
     </div>
-    <div class="history">History</div>
+    <div class="history">
+        <div class="max-h-137 overflow-y-auto border border-gray-200 p-4 ">
+            <ul>
+                {#each items.slice(0, 6) as item}
+                    <div class="mb-4">
+                    <li class="px-2 py-1 bg-gray-50 rounded">
+                        "{item}"
+                    </li>
+                    <ul class="ml-4 p-1">
+                        {#each items.slice(0, 6) as item}
+                            <li>
+                                - "{item}"
+                            </li>
+                        {/each}
+                    </ul>
+                    </div>
+                {/each}
+
+            </ul>
+        </div>
+    </div>
     <div class="footer">Footer</div>
 </div>
 
@@ -203,7 +223,7 @@
     }
 
     .history {
-        background-color: #f4a261;
+        background-color: white;
     }
 
     .footer {
