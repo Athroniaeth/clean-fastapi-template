@@ -3,8 +3,6 @@
     import {
         Footer,
         FooterCopyright,
-        FooterLink,
-        FooterLinkGroup,
         GradientButton,
         Input,
         Label,
@@ -15,40 +13,50 @@
         NavUl,
         Spinner
     } from "flowbite-svelte";
-    import {page} from "$app/state";
+
     import {AnnotationSolid} from "flowbite-svelte-icons";
-    import ParameterSlider from "$lib/components/ParameterSlider.svelte";
+    import ParameterSlider from "./ParameterSlider.svelte";
 
-    let activeUrl = $derived(page.url.pathname);
 
-    let selectedModel = 'communes:v1';
+    let selectedModel = $state('communes:v1');
     let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
 
-    let temperature = 1;
-    let topP = 0.95;
-    let topK = 0;  // Disabled by default
-    let maxTokens = 30;
-    let nResponses = 5;
+    let temperature = $state(1);
+    let topP = $state(0.95);
+    let topK = $state(0);  // Disabled by default
+    let maxTokens = $state(30);
+    let nResponses = $state(5);
 </script>
 
 <!-- src/routes/+page.svelte -->
 
 <div class="container">
-    <div class="header">
-        <Navbar>
+    <div class="header pl-15 pr-40">
+        <Navbar class="px-2 sm:px-4 py-2.5 dark:bg-gray-900">
+            <!-- Logo ou nom du site -->
             <NavBrand href="/">
-                <img src="/logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo"/>
-                <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+                <img
+                        src="https://flowbite.com/docs/images/logo.svg"
+                        class="mr-3 h-6 sm:h-9"
+                        alt="Rename Logo"
+                />
+                <span class="self-center whitespace-nowrap text-xl font-semibold text-blue-950 dark:text-white">
+                    Rename
+                </span>
             </NavBrand>
-            <NavHamburger/>
-            <NavUl {activeUrl}>
-                <NavLi href="/">Home</NavLi>
-                <NavLi href="/navbar">Navbar</NavLi>
-                <NavLi href="/accordion">Accordion</NavLi>
-                <NavLi href="/alert">Alert</NavLi>
-                <NavLi href="/avatar">Avatar</NavLi>
+
+            <!-- Bouton hamburger pour le mobile -->
+            <NavHamburger class="text-white hover:bg-blue-800"/>
+
+            <!-- Liste des liens de navigation -->
+            <NavUl>
+                <NavLi href="/">Accueil</NavLi>
+                <NavLi href="/a-propos">À Propos</NavLi>
+                <NavLi href="/services">Services</NavLi>
+                <NavLi href="/contact">Contact</NavLi>
             </NavUl>
         </Navbar>
+
     </div>
     <div class="models" style="padding-top: 15px;">
 
@@ -67,14 +75,14 @@
             <Label for="default-input" class="mb-2 block">Start-text</Label>
             <Input id="default-input" placeholder="Default input"/>
         </div>
-        <div class="max-h-85 overflow-y-auto border border-gray-200 p-4">
+        <div class="max-h-75 overflow-y-auto border border-gray-200 p-4">
             <ul class="space-y-2">
                 {#each items as item}
                     <li class="px-2 py-1 bg-gray-50 rounded">{item}</li>
                 {/each}
             </ul>
         </div>
-        <div class="flex mt-7">
+        <div class="flex mt-6">
             <GradientButton class="mr-6" color="blue">
                 <Spinner class="me-3" size="4" color="gray"/>
                 Loading ...
@@ -139,7 +147,7 @@
         />
     </div>
     <div class="history">
-        <div class="max-h-130 overflow-y-auto border border-gray-200 p-4 ">
+        <div class="max-h-125 overflow-y-auto border border-gray-200 p-4 ">
             <ul>
                 {#each items.slice(0, 6) as item}
                     <div class="mb-4">
@@ -160,16 +168,21 @@
         </div>
     </div>
     <div class="footer">
-        <Footer class="mt-3">
-            <FooterCopyright href="/" by="Athroniaeth" year={2025}>
+        <Footer>
+            <FooterCopyright style="color:dodgerblue" href="/" by="Athroniaeth" year={2025}>
                 All rights reserved.
             </FooterCopyright>
+            <!--
             <FooterLinkGroup class="mt-3 flex flex-wrap items-center text-sm  sm:mt-0 ">
-                <FooterLink href="/">About</FooterLink>
-                <FooterLink href="/">Privacy Policy</FooterLink>
-                <FooterLink href="/">Licensing</FooterLink>
-                <FooterLink href="/">Contact</FooterLink>
+
+                <FooterLink style="color:dodgerblue" href="/">About</FooterLink>
+                <FooterLink style="color:dodgerblue" href="/">About</FooterLink>
+                <FooterLink style="color:dodgerblue" href="/">Privacy Policy</FooterLink>
+                <FooterLink style="color:dodgerblue" href="/">Licensing</FooterLink>
+                <FooterLink style="color:dodgerblue" href="/">Contact</FooterLink>
+
             </FooterLinkGroup>
+            -->
         </Footer>
     </div>
 </div>
@@ -215,30 +228,46 @@
         background-color: #f2f5ff; /* Couleur de fond pour les espaces (gap) */
     }
 
-    /* --- Assignation des éléments à leurs zones --- */
-    .header {
-        grid-area: header;
-    }
 
-    .models {
-        grid-area: models;
-    }
-
-    .panel {
-        grid-area: panel;
-    }
-
-    .parameters {
-        grid-area: parameters;
+    .container {
+        display: grid;
+        grid-template-columns: 0.75fr 4fr 0.75fr 10fr 0.75fr 4fr 0.75fr 6fr 0.75fr;
+        grid-template-rows: 0.5fr 0.25fr 2fr 2fr 0.25fr 0.5fr;
+        gap: 0px 0px;
+        grid-auto-flow: row;
+        grid-template-areas:
+    "header header header header header header header header header"
+    ". . . . . . . . ."
+    ". models . panel . parameters . history ."
+    ". models . panel . parameters . history ."
+    ". . . . . . . . ."
+    "footer footer footer footer footer footer footer footer footer";
     }
 
     .history {
         grid-area: history;
     }
 
+    .parameters {
+        grid-area: parameters;
+    }
+
+    .panel {
+        grid-area: panel;
+    }
+
+    .models {
+        grid-area: models;
+    }
+
+    .header {
+        grid-area: header;
+    }
+
     .footer {
         grid-area: footer;
     }
+
 
     /* --- Style visuel pour la démonstration --- */
     .container > div {
