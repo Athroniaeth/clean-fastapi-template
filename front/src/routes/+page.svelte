@@ -1,54 +1,123 @@
-<script>
-    import ModelRadio from "./ModelRadio.svelte";
+<script lang="ts">
+    // --- Imports SvelteKit & Composants ---
     import {
-        Footer,
-        FooterCopyright,
-        GradientButton,
-        Input,
-        Label,
-        Navbar,
-        NavBrand,
-        NavHamburger,
-        NavLi,
-        NavUl,
-        Spinner
+        Footer, FooterCopyright, GradientButton, Input, Label, Navbar, NavBrand, NavHamburger, NavLi, NavUl, Spinner
     } from "flowbite-svelte";
-
-    import {AnnotationSolid} from "flowbite-svelte-icons";
+    import { AnnotationSolid } from "flowbite-svelte-icons";
+    import ModelRadio from "./ModelRadio.svelte";
     import ParameterSlider from "./ParameterSlider.svelte";
 
+    // --- Imports pour l'API ---
+    import { ApiClient, type GenerationParams } from '$lib/api-client'; // Import du client
 
-    let selectedModel = $state('communes:v1');
-    let items = Array.from({length: 30}, (_, i) => `Élément ${i + 1}`);
+    // --- Instance du client API ---
+    const PUBLIC_API_BASE_URL = "http://localhost:8000/api/v1"; // URL de l'API publique
+    const apiClient = new ApiClient(PUBLIC_API_BASE_URL);
 
-    let temperature = $state(1);
+    // --- État (State) de l'application avec les runes Svelte 5 ---
+
+    // Paramètres de génération
+    let temperature = $state(0.6);
     let topP = $state(0.95);
-    let topK = $state(0);  // Disabled by default
+    let topK = $state(0);
     let maxTokens = $state(30);
     let nResponses = $state(5);
+    let prompt = $state('');
+
+    // Données de l'API et état de l'UI
+    let models = $state<string[]>([]);
+    let selectedModel = $state('');
+    let results = $state<string[]>([]);
+    let isLoading = $state(false);
+    let error = $state<string | null>(null);
+
+    // MODIFICATION 1: Ajout de l'état pour l'historique
+    type HistoryEntry = { prompt: string, results: string[] };
+    let history = $state<HistoryEntry[]>([]);
+
+    // --- Chargement des données initiales ---
+    (async () => {
+        try {
+            const modelList = await apiClient.listModels();
+            models = modelList;
+            if (modelList.length > 0) {
+                selectedModel = modelList[0];
+            }
+        } catch (e: any) {
+            error = e.message;
+        }
+    })();
+
+
+    // MODIFICATION 2: Fonction de génération mise à jour
+    // --- Fonction pour lancer la génération (version corrigée) ---
+async function handleGenerate() {
+    if (!selectedModel) {
+        error = "Veuillez sélectionner un modèle.";
+        return;
+    }
+
+    isLoading = true;
+    error = null;
+
+    // On initialise le tableau des résultats avec le prompt.
+    // Cette assignation initiale met à jour l'interface une première fois.
+    results = Array(nResponses).fill(prompt);
+
+    const params: GenerationParams = {
+        prompt: prompt,
+        n: 1, // On demande un stream par résultat
+        temperature: temperature,
+        top_p: topP,
+        top_k: topK,
+        max_length: maxTokens,
+    };
+
+    const streamPromises = Array.from({ length: nResponses }).map((_, i) =>
+        apiClient.stream(selectedModel, params, {
+            onToken: (token) => {
+                // 1. On met à jour la valeur dans notre tableau en mémoire
+                results[i] += token;
+
+                // 2. LA CORRECTION MAGIQUE :
+                // On assigne une nouvelle copie du tableau à la variable réactive 'results'.
+                // Svelte voit une nouvelle assignation et est OBLIGÉ de redessiner le {#each} block.
+                results = [...results];
+            },
+            onEnd: () => {
+                console.log(`Stream ${i + 1}/${nResponses} terminé.`);
+            },
+            onError: (e) => {
+                error = `Erreur sur le stream ${i + 1}: ${e.message}`;
+            },
+        })
+    );
+
+    try {
+        await Promise.all(streamPromises);
+        // À la fin, on sauvegarde une copie du tableau final (qui a été correctement mis à jour)
+        history.unshift({ prompt: prompt || '(no prompt)', results: [...results] });
+
+    } catch (e: any) {
+        error = e.message;
+    } finally {
+        isLoading = false;
+    }
+}
+
 </script>
 
 <!-- src/routes/+page.svelte -->
 
 <div class="container">
     <div class="header pl-15 pr-40">
+        <!-- Navbar reste identique -->
         <Navbar class="px-2 sm:px-4 py-2.5 dark:bg-gray-900">
-            <!-- Logo ou nom du site -->
             <NavBrand href="/">
-                <img
-                        src="https://flowbite.com/docs/images/logo.svg"
-                        class="mr-3 h-6 sm:h-9"
-                        alt="Rename Logo"
-                />
-                <span class="self-center whitespace-nowrap text-xl font-semibold text-blue-950 dark:text-white">
-                    Rename
-                </span>
+                <img src="https://flowbite.com/docs/images/logo.svg" class="mr-3 h-6 sm:h-9" alt="Rename Logo"/>
+                <span class="self-center whitespace-nowrap text-xl font-semibold text-blue-950 dark:text-white">Rename</span>
             </NavBrand>
-
-            <!-- Bouton hamburger pour le mobile -->
             <NavHamburger class="text-white hover:bg-blue-800"/>
-
-            <!-- Liste des liens de navigation -->
             <NavUl>
                 <NavLi href="/">Accueil</NavLi>
                 <NavLi href="/">À Propos</NavLi>
@@ -56,115 +125,89 @@
                 <NavLi href="/">Contact</NavLi>
             </NavUl>
         </Navbar>
-
     </div>
+
+    <!-- Section des modèles, maintenant dynamique -->
     <div class="models" style="padding-top: 15px;">
-
-        <ModelRadio bind:group={selectedModel} value="communes:v1" description="French town names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="communes:v2" description="French town names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="communes:v3" description="French town names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v1" description="French first names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v2" description="French first names"></ModelRadio>
-        <ModelRadio bind:group={selectedModel} value="prénom:v3" description="French first names"></ModelRadio>
-
-
+        {#if models.length > 0}
+            {#each models as model}
+                <ModelRadio bind:group={selectedModel} value={model} description={`Modèle: ${model}`}></ModelRadio>
+            {/each}
+        {:else}
+            <p>Chargement des modèles...</p>
+        {/if}
     </div>
 
     <div class="panel" style="padding-top: 15px;padding-left: 30px;padding-right: 30px;">
         <div class="mb-6">
-            <Label for="default-input" class="mb-2 block">Start-text</Label>
-            <Input id="default-input" placeholder="Default input"/>
+            <Label for="default-input" class="mb-2 block">Texte de départ (Prompt)</Label>
+            <!-- Lier l'input à la variable `prompt` -->
+            <Input id="default-input" placeholder="Ex: 'Saint-Jean-de-'" bind:value={prompt}/>
         </div>
+        <!-- Affichage des résultats de la génération -->
         <div class="max-h-75 overflow-y-auto border border-gray-200 p-4">
             <ul class="space-y-2">
-                {#each items as item}
-                    <li class="px-2 py-1 bg-gray-50 rounded">{item}</li>
+                {#if results.length === 0 && !isLoading}
+                    <li class="text-gray-400">Les résultats apparaîtront ici...</li>
+                {/if}
+                {#each results as resultItem}
+                    <li class="px-2 py-1 bg-gray-50 rounded min-h-[1.5em]">{resultItem}</li>
                 {/each}
             </ul>
         </div>
+        <!-- Boutons de génération conditionnels -->
+        <!-- Boutons de génération conditionnels -->
         <div class="flex mt-6">
-            <GradientButton class="mr-6" color="blue">
-                <Spinner class="me-3" size="4" color="gray"/>
-                Loading ...
-            </GradientButton>
-            <GradientButton class="mr-6" color="blue">
-                Generate
-                <AnnotationSolid class="ms-2 h-5 w-5"/>
-            </GradientButton>
+            {#if isLoading}
+                <GradientButton class="mr-6" color="blue" disabled>
+                    <Spinner class="me-3" size="4" color="gray"/>
+                    Génération en cours...
+                </GradientButton>
+            {:else}
+                <!-- CORRECTION: Utilisation de `on:click` au lieu de `onclick` -->
+                <GradientButton class="mr-6" color="blue" onclick={handleGenerate}>
+                    Générer
+                    <AnnotationSolid class="ms-2 h-5 w-5"/>
+                </GradientButton>
+            {/if}
         </div>
+        <!-- Affichage d'erreur -->
+        {#if error}
+            <p class="mt-4 text-red-600">{error}</p>
+        {/if}
     </div>
+
     <div class="parameters p-5">
-        <!-- Temperature -->
-        <ParameterSlider
-                id="temperature-range"
-                label="Temperature"
-                min={0}
-                max={3}
-                step={0.01}
-                bind:value={temperature}
-                round={true}
-        />
-
-        <!-- Top P -->
-        <ParameterSlider
-                id="top-p-range"
-                label="Top P"
-                min={0}
-                max={1}
-                step={0.01}
-                bind:value={topP}
-        />
-
-        <!-- Top K -->
-        <ParameterSlider
-                id="top-k-range"
-                label="Top K"
-                min={0}
-                max={100}
-                step={1}
-                bind:value={topK}
-                round={true}
-        />
-
-        <!-- Max Tokens -->
-        <ParameterSlider
-                id="max-tokens-range"
-                label="Max Tokens"
-                min={1}
-                max={1000}
-                step={1}
-                bind:value={maxTokens}
-        />
-
-        <!-- N Responses -->
-        <ParameterSlider
-                id="n-responses-range"
-                label="N Responses"
-                min={1}
-                max={10}
-                step={1}
-                bind:value={nResponses}
-        />
+        <!-- Sliders de paramètres (inchangés, car déjà liés aux variables d'état) -->
+        <ParameterSlider id="temperature-range" label="Temperature" min={0} max={3} step={0.01} bind:value={temperature}/>
+        <ParameterSlider id="top-p-range" label="Top P" min={0} max={1} step={0.01} bind:value={topP}/>
+        <ParameterSlider id="top-k-range" label="Top K" min={0} max={100} step={1} bind:value={topK}/>
+        <ParameterSlider id="max-tokens-range" label="Max Tokens" min={1} max={1000} step={1} bind:value={maxTokens}/>
+        <ParameterSlider id="n-responses-range" label="N Responses" min={1} max={10} step={1} bind:value={nResponses}/>
     </div>
+        <!-- MODIFICATION 3: Section "history" rendue dynamique -->
     <div class="history">
         <div class="max-h-125 overflow-y-auto border border-gray-200 p-4 ">
-            <ul>
-                {#each items.slice(0, 6) as item}
-                    <div class="mb-4">
-                        <li class="px-2 py-1 bg-gray-50 rounded">
-                            "{item}"
-                        </li>
-                        <ul class="ml-4 p-1">
-                            {#each items.slice(0, 6) as item}
-                                <li>
-                                    - "{item}"
-                                </li>
-                            {/each}
-                        </ul>
-                    </div>
-                {/each}
-
-            </ul>
+            {#if history.length > 0}
+                <ul>
+                    <!-- On boucle sur notre nouvel état 'history' -->
+                    {#each history as entry, i (entry.prompt + i)}
+                        <div class="mb-4">
+                            <li class="px-2 py-1 bg-gray-50 rounded font-semibold text-gray-800">
+                                Prompt: "{entry.prompt}"
+                            </li>
+                            <ul class="ml-4 list-disc list-inside p-1 text-sm text-gray-600">
+                                <!-- Affiche les résultats de cette entrée d'historique -->
+                                {#each entry.results as resultItem}
+                                    <li>{resultItem}</li>
+                                {/each}
+                            </ul>
+                        </div>
+                    {/each}
+                </ul>
+            {:else}
+                <p class="text-gray-400">L'historique des générations apparaîtra ici.</p>
+            {/if}
         </div>
     </div>
     <div class="footer">
