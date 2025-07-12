@@ -27,6 +27,10 @@ dependencies = [
     "numpy>=2.3.0",
     "torchmetrics>=1.7.2",
     "mypy-boto3-s3>=1.38.26",
+    "sqlalchemy>=2.0.41",
+
+    "aiosqlite>=0.21.0",
+    "types-aioboto3-lite[essential]>=14.3.0",
 ]
 
 [tool.uv.sources]
@@ -62,8 +66,6 @@ dev = [
     "asgi-lifespan>=2.1.0",
     # SQLAlchemy dev mode
     "sqlalchemy[asyncio]>=2.0.41",
-    "aiosqlite>=0.21.0",
-    "types-aioboto3-lite[essential]>=14.3.0",
 ]
 
 [tool.pytest.ini_options]

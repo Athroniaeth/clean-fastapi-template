@@ -51,9 +51,9 @@
             <!-- Liste des liens de navigation -->
             <NavUl>
                 <NavLi href="/">Accueil</NavLi>
-                <NavLi href="/a-propos">À Propos</NavLi>
-                <NavLi href="/services">Services</NavLi>
-                <NavLi href="/contact">Contact</NavLi>
+                <NavLi href="/">À Propos</NavLi>
+                <NavLi href="/">Services</NavLi>
+                <NavLi href="/">Contact</NavLi>
             </NavUl>
         </Navbar>
 

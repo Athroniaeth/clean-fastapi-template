@@ -1,9 +1,33 @@
 services:
+  front:
+    build:
+      context: ./front
+    working_dir: /app
+    volumes:
+      - ./front:/app
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public-web
+      - traefik.constraint-label=traefik-public
+      # Uses the environment variable DOMAIN
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-public-http.entrypoints=http
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-public-http.middlewares=https-redirect
+      # traefik-https the actual router using HTTPS
+      # Uses the environment variable DOMAIN
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-public-https.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-public-https.entrypoints=https
+      - traefik.http.routers.front-${TRAEFIK_LABEL}-public-https.tls=true
+      - traefik.http.services.front-${TRAEFIK_LABEL}-public-https.loadbalancer.server.port=${PORT_FRONT}
+    networks:
+      - traefik
+
   api:
-    # Force admin to create a .env file
+    # Force developer to create a .env file
     env_file: .env
-    container_name: api
-    command: gunicorn -k uvicorn.workers.UvicornWorker template.app:create_app --bind ${HOST}:${PORT} -w ${WORKERS:-1}
+    command: gunicorn -k uvicorn.workers.UvicornWorker template.api.app:factory_app --bind ${HOST_API}:${PORT_API} -w ${WORKERS_API:-1}
     build:
       context: .
     volumes:
@@ -14,15 +38,15 @@ services:
       - traefik.docker.network=traefik_public-web
       - traefik.constraint-label=traefik-public
       # Uses the environment variable DOMAIN
-      - traefik.http.routers.${TRAEFIK_LABEL}-http.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.${TRAEFIK_LABEL}-public-http.entrypoints=http
-      - traefik.http.routers.${TRAEFIK_LABEL}-public-http.middlewares=https-redirect
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-http.rule=Host(`api.${DOMAIN}`)
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-public-http.entrypoints=http
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-public-http.middlewares=https-redirect
       # traefik-https the actual router using HTTPS
       # Uses the environment variable DOMAIN
-      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.entrypoints=https
-      - traefik.http.routers.${TRAEFIK_LABEL}-public-https.tls=true
-      - traefik.http.services.${TRAEFIK_LABEL}-public-https.loadbalancer.server.port=${PORT}
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-public-https.rule=Host(`api.${DOMAIN}`)
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-public-https.entrypoints=https
+      - traefik.http.routers.api-${TRAEFIK_LABEL}-public-https.tls=true
+      - traefik.http.services.api-${TRAEFIK_LABEL}-public-https.loadbalancer.server.port=${PORT_API}
     networks:
       - traefik
 

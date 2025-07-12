@@ -1,3 +1,4 @@
+from flask.cli import load_dotenv
 from loguru import logger
 
 from contextlib import asynccontextmanager
@@ -93,6 +94,7 @@ def create_app(
 def factory_app() -> FastAPI:
     """Create the FastAPI application."""
     # Load settings from config file
+    load_dotenv()
     settings = get_settings()
 
     # Initialize the infrastructure

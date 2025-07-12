@@ -1907,6 +1907,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aioboto3" },
+    { name = "aiosqlite" },
     { name = "bcrypt" },
     { name = "botocore" },
     { name = "fastapi", extra = ["standard"] },
@@ -1921,15 +1922,16 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-jose" },
+    { name = "sqlalchemy" },
     { name = "torch" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typer" },
+    { name = "types-aioboto3-lite", extra = ["essential"] },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "aiosqlite" },
     { name = "asgi-lifespan" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -1938,13 +1940,13 @@ dev = [
     { name = "ruff" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "ty" },
-    { name = "types-aioboto3-lite", extra = ["essential"] },
     { name = "vulture" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aioboto3", specifier = ">=14.3.0" },
+    { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "bcrypt", specifier = ">=4.3.0" },
     { name = "botocore", specifier = ">=1.37.3" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.12" },
@@ -1959,15 +1961,16 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "python-jose", specifier = ">=3.4.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "torch", specifier = ">=2.7.1", index = "https://download.pytorch.org/whl/cu128" },
     { name = "torchmetrics", specifier = ">=1.7.2" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "typer", specifier = ">=0.15.4" },
+    { name = "types-aioboto3-lite", extras = ["essential"], specifier = ">=14.3.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "asgi-lifespan", specifier = ">=2.1.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
@@ -1976,7 +1979,6 @@ dev = [
     { name = "ruff", specifier = ">=0.11.10" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "ty", specifier = ">=0.0.1a7" },
-    { name = "types-aioboto3-lite", extras = ["essential"], specifier = ">=14.3.0" },
     { name = "vulture", specifier = ">=2.14" },
 ]
 
