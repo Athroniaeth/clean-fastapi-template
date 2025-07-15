@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { PUBLIC_API_URL } from '$env/static/public';
     // --- Imports SvelteKit & Composants ---
     import {
         Footer, FooterCopyright, GradientButton, Input, Label, Navbar, NavBrand, NavHamburger, NavLi, NavUl, Spinner
@@ -11,8 +12,9 @@
     import { ApiClient, type GenerationParams } from '$lib/api-client'; // Import du client
 
     // --- Instance du client API ---
-    const PUBLIC_API_BASE_URL = "http://localhost:8001/api/v1"; // URL de l'API publique
-    const apiClient = new ApiClient(PUBLIC_API_BASE_URL);
+
+    // const PUBLIC_API_URL = "http://localhost:8001/api/v1"
+    const apiClient = new ApiClient(PUBLIC_API_URL);
 
     // --- État (State) de l'application avec les runes Svelte 5 ---
 

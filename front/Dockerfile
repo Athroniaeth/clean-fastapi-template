@@ -12,6 +12,11 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
+
+# Set environment variables for the build
+ARG PUBLIC_API_URL
+ENV PUBLIC_API_URL=$PUBLIC_API_URL
+
 RUN pnpm run build
 
 ### Étape 2 : Serve statique via nginx

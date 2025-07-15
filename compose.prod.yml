@@ -2,27 +2,24 @@ services:
   front:
     build:
       context: ./front
+      args:
+        PUBLIC_API_URL: ${DOMAIN_API}
     working_dir: /app
+    ports:
+      - "${PORT_FRONT}:${PORT_FRONT}"
     volumes:
       - ./front:/app
     environment:
+      - PUBLIC_API_URL=${DOMAIN_API}
       - NODE_ENV=${ENVIRONMENT}
-#     networks:
-#       - internal
 
   api:
     # Force developer to create a .env file
-    env_file: .env
-    command: gunicorn -k uvicorn.workers.UvicornWorker template.api.app:factory_app -w ${WORKERS_API:-1} -b 0.0.0.0:8001
-    ports:
-      - "8001:8001"
+    command: gunicorn -k uvicorn.workers.UvicornWorker template.api.app:factory_app --bind ${HOST_API}:${PORT_API} -w ${WORKERS_API:-1}
     volumes:
+      - ./.env:/app/.env
       - ./data:/app/data
     build:
       context: .
-#     networks:
-#       - internal
-
-# networks:
-#     internal:
-#         driver: bridge
+    ports:
+      - "${PORT_API}:${PORT_API}"

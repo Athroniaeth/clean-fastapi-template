@@ -1,13 +1,17 @@
 services:
   front:
+    env_file: .env
     build:
       context: ./front
+      args:
+        PUBLIC_API_URL: ${DOMAIN_API}
     working_dir: /app
     ports:
       - "${PORT_FRONT}:${PORT_FRONT}"
     volumes:
       - ./front:/app
     environment:
+      - PUBLIC_API_URL=${DOMAIN_API}
       - NODE_ENV=${ENVIRONMENT}
 
   api:
