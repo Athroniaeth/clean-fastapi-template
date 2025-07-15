@@ -2,7 +2,7 @@
 ###############################################
 # Étape 1 : Build front (Node + pnpm)
 ###############################################
-FROM node:24.4-slim AS builder
+FROM node:24 AS builder
 
 RUN corepack enable && corepack prepare pnpm@9 --activate
 

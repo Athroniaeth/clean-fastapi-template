@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { PUBLIC_API_URL } from '$env/static/public';
     // --- Imports SvelteKit & Composants ---
     import {
         Footer, FooterCopyright, GradientButton, Input, Label, Navbar, NavBrand, NavHamburger, NavLi, NavUl, Spinner
@@ -13,7 +12,7 @@
 
     // --- Instance du client API ---
 
-    // const PUBLIC_API_URL = "http://localhost:8001/api/v1"
+    const PUBLIC_API_URL = "http://localhost:8001/api/v1"
     console.log(`API Client ${PUBLIC_API_URL}`)
     const apiClient = new ApiClient(PUBLIC_API_URL);
 
