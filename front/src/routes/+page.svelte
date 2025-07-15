@@ -14,12 +14,13 @@
     // --- Instance du client API ---
 
     // const PUBLIC_API_URL = "http://localhost:8001/api/v1"
+    console.log(`API Client ${PUBLIC_API_URL}`)
     const apiClient = new ApiClient(PUBLIC_API_URL);
 
     // --- État (State) de l'application avec les runes Svelte 5 ---
 
     // Paramètres de génération
-    let temperature = $state(0.6);
+    let temperature = $state(1);
     let topP = $state(0.95);
     let topK = $state(0);
     let maxTokens = $state(30);
@@ -121,8 +122,8 @@ async function handleGenerate() {
             </NavBrand>
             <NavHamburger class="text-white hover:bg-blue-800"/>
             <NavUl>
-                <NavLi href="/">Accueil</NavLi>
-                <NavLi href="/">À Propos</NavLi>
+                <NavLi href="/">Home</NavLi>
+                <NavLi href="/">About us</NavLi>
                 <NavLi href="/">Services</NavLi>
                 <NavLi href="/">Contact</NavLi>
             </NavUl>
@@ -142,7 +143,7 @@ async function handleGenerate() {
 
     <div class="panel" style="padding-top: 15px;padding-left: 30px;padding-right: 30px;">
         <div class="mb-6">
-            <Label for="default-input" class="mb-2 block">Texte de départ (Prompt)</Label>
+            <Label for="default-input" class="mb-2 block">Start text (Prompt)</Label>
             <!-- Lier l'input à la variable `prompt` -->
             <Input id="default-input" placeholder="Ex: 'Saint-Jean-de-'" bind:value={prompt}/>
         </div>
@@ -150,7 +151,7 @@ async function handleGenerate() {
         <div class="max-h-75 overflow-y-auto border border-gray-200 p-4">
             <ul class="space-y-2">
                 {#if results.length === 0 && !isLoading}
-                    <li class="text-gray-400">Les résultats apparaîtront ici...</li>
+                    <li class="text-gray-400">The results will appear here...</li>
                 {/if}
                 {#each results as resultItem}
                     <li class="px-2 py-1 bg-gray-50 rounded min-h-[1.5em]">{resultItem}</li>
@@ -163,12 +164,12 @@ async function handleGenerate() {
             {#if isLoading}
                 <GradientButton class="mr-6" color="blue" disabled>
                     <Spinner class="me-3" size="4" color="gray"/>
-                    Génération en cours...
+                    Current generation...
                 </GradientButton>
             {:else}
                 <!-- CORRECTION: Utilisation de `on:click` au lieu de `onclick` -->
                 <GradientButton class="mr-6" color="blue" onclick={handleGenerate}>
-                    Générer
+                    Generate
                     <AnnotationSolid class="ms-2 h-5 w-5"/>
                 </GradientButton>
             {/if}
@@ -181,11 +182,11 @@ async function handleGenerate() {
 
     <div class="parameters p-5">
         <!-- Sliders de paramètres (inchangés, car déjà liés aux variables d'état) -->
-        <ParameterSlider id="temperature-range" label="Temperature" min={0} max={3} step={0.01} bind:value={temperature}/>
-        <ParameterSlider id="top-p-range" label="Top P" min={0} max={1} step={0.01} bind:value={topP}/>
-        <ParameterSlider id="top-k-range" label="Top K" min={0} max={100} step={1} bind:value={topK}/>
-        <ParameterSlider id="max-tokens-range" label="Max Tokens" min={1} max={1000} step={1} bind:value={maxTokens}/>
-        <ParameterSlider id="n-responses-range" label="N Responses" min={1} max={10} step={1} bind:value={nResponses}/>
+        <ParameterSlider id="temperature-range" label="Temperature" min={0} max={3} step={0.05} bind:value={temperature}/>
+        <ParameterSlider id="top-p-range" label="Top P" min={0} max={1} step={0.05} bind:value={topP}/>
+        <ParameterSlider id="top-k-range" label="Top K" min={0} max={20} step={1} round={true} bind:value={topK}/>
+        <ParameterSlider id="max-tokens-range" label="Max Tokens" min={1} max={100} step={1} round={true} bind:value={maxTokens}/>
+        <ParameterSlider id="n-responses-range" label="N Responses" min={1} max={10} step={1} round={true} bind:value={nResponses}/>
     </div>
         <!-- MODIFICATION 3: Section "history" rendue dynamique -->
     <div class="history">
@@ -208,7 +209,7 @@ async function handleGenerate() {
                     {/each}
                 </ul>
             {:else}
-                <p class="text-gray-400">L'historique des générations apparaîtra ici.</p>
+                <p class="text-gray-400">The generation history will appear here.</p>
             {/if}
         </div>
     </div>
