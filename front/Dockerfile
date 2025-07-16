@@ -1,28 +1,15 @@
-
-###############################################
-# Étape 1 : Build front (Node + pnpm)
-###############################################
-FROM node:24 AS builder
-
-RUN corepack enable && corepack prepare pnpm@9 --activate
+FROM node:24.4-bullseye-slim AS build
 
 WORKDIR /app
-
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json yarn.lock .yarnrc.yml ./
+RUN corepack enable && yarn install --immutable --mode=skip-build
 
 COPY . .
+RUN yarn build        # génère /build
 
-# Set environment variables for the build
-ARG PUBLIC_API_URL
-ENV PUBLIC_API_URL=$PUBLIC_API_URL
-
-RUN pnpm run build
-
-### Étape 2 : Serve statique via nginx
 FROM nginx:alpine AS runner
 
-COPY --from=builder /app/build /usr/share/nginx/html
-
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

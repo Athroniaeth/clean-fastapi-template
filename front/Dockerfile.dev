@@ -1,0 +1,17 @@
+FROM node:18-bullseye AS base
+
+WORKDIR /app
+ENV PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH" \
+    NODE_ENV=development
+
+FROM base AS deps
+
+COPY package.json yarn.lock .yarnrc.yml ./
+RUN corepack enable && yarn install --immutable
+
+FROM deps AS dev
+
+COPY . .
+EXPOSE 5173
+CMD [ "yarn", "dev", "--host" ]
