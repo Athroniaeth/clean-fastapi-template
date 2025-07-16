@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json yarn.lock .yarnrc.yml ./
 RUN corepack enable && yarn install --immutable --mode=skip-build
 
+ARG PUBLIC_API_URL
+ENV PUBLIC_API_URL=${PUBLIC_API_URL}
+
 COPY . .
 RUN yarn build        # génère /build
 

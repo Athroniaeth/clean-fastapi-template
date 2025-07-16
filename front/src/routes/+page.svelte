@@ -9,12 +9,13 @@
 
     // --- Imports pour l'API ---
     import { ApiClient, type GenerationParams } from '$lib/api-client'; // Import du client
+    import { API_URL } from '$lib/env';
 
     // --- Instance du client API ---
 
-    const PUBLIC_API_URL = "http://localhost:8001/api/v1"
-    console.log(`API Client ${PUBLIC_API_URL}`)
-    const apiClient = new ApiClient(PUBLIC_API_URL);
+    //const PUBLIC_API_URL = "http://localhost:8001/api/v1"
+    console.log(`API Client ${API_URL}`)
+    const apiClient = new ApiClient(API_URL);
 
     // --- État (State) de l'application avec les runes Svelte 5 ---
 
