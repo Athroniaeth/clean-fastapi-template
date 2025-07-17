@@ -3,15 +3,15 @@ from typing import AsyncIterator
 
 import pytest
 
-from template.application.api_keys import (
+from rename.application.api_keys import (
     ApiKeyService,
     APIKeyNotFoundException,
     APIKeyNotProvidedException,
     APIKeyInvalidException,
 )
-from template.domain.api_keys import ApiKey
-from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
-from template.infrastructure.repositories.api_keys import APIKeyRepository
+from rename.domain.api_keys import ApiKey
+from rename.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
+from rename.infrastructure.repositories.api_keys import APIKeyRepository
 
 
 ApiKey.generate_raw_key = lambda: "test_key_1234567890"  # Mock the key generation for testing purposes

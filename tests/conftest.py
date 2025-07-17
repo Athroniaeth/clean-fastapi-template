@@ -6,10 +6,10 @@ from asgi_lifespan import LifespanManager
 from httpx import AsyncClient, ASGITransport
 from loguru import logger
 
-from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
-from template.infrastructure.database.base import AbstractDatabaseInfra, Base
-from template.infrastructure.storage.base import AbstractStorageInfra
-from template.infrastructure.storage.local import InMemoryStorageInfra
+from rename.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
+from rename.infrastructure.database.base import AbstractDatabaseInfra, Base
+from rename.infrastructure.storage.base import AbstractStorageInfra
+from rename.infrastructure.storage.local import InMemoryStorageInfra
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -26,8 +26,8 @@ async def client() -> AsyncIterator[AsyncClient]:
     Notes:
         See: https://github.com/Kludex/fastapi-tips?tab=readme-ov-file#5-use-httpxs-asyncclient-instead-of-testclient
     """
-    from template.api import create_app, lifespan
-    from template.settings import Settings
+    from rename.api import create_app, lifespan
+    from rename.settings import Settings
 
     settings = Settings()
 

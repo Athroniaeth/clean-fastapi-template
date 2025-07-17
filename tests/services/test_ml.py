@@ -5,12 +5,12 @@ import polars
 import pytest
 import torch
 
-from template.application.ml import MLService, IntegrityError, NotFoundException, ParameterException
-from template.domain.ml import BengioMLP
-from template.domain.tokenizer import CharTokenizer
-from template.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
-from template.infrastructure.repositories.ml import MLMetaRepository, MLBlobRepository
-from template.infrastructure.storage.local import InMemoryStorageInfra
+from rename.application.ml import MLService, IntegrityError, NotFoundException, ParameterException
+from rename.domain.ml import BengioMLP
+from rename.domain.tokenizer import CharTokenizer
+from rename.infrastructure.database.adapter import InMemorySQLiteDatabaseInfra
+from rename.infrastructure.repositories.ml import MLMetaRepository, MLBlobRepository
+from rename.infrastructure.storage.local import InMemoryStorageInfra
 
 
 @pytest.fixture(scope="function")

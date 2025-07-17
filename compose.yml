@@ -17,7 +17,7 @@ services:
   api:
     # Force developer to create a .env file
     env_file: .env
-    command: gunicorn -k uvicorn.workers.UvicornWorker template.api.app:factory_app --bind ${HOST_API}:${PORT_API} -w ${WORKERS_API:-1}
+    command: gunicorn -k uvicorn.workers.UvicornWorker rename.api.app:factory_app --bind ${HOST_API}:${PORT_API} -w ${WORKERS_API:-1}
     volumes:
       - ./.env:/app/.env
       - ./data:/app/data
